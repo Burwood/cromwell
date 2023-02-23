@@ -24,6 +24,7 @@ final class GcpBatchBackendSingletonActor (name: String) extends Actor with Acto
     case jobSubmission: BatchRequest =>
       //val job = GcpBatchJob(jobSubmission, 2000, 200, "e2-standard-4", "gcr.io/google-containers/busybox")
       val job = GcpBatchJob(jobSubmission,200,200, "e2-standard-4", jobSubmission.runtimeAttributes)
+      job.uploadObjectToGcp("batch-testing-350715", "cromwell-29292", "test.sh", "/Users/jarroyo/Developer/cromwell/server/temp/startup.sh")
       job.submitJob()
       //result.getStatus
     case other =>

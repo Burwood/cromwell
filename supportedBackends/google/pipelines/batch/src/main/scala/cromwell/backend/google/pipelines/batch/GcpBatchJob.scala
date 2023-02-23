@@ -8,6 +8,12 @@ import cromwell.backend.google.pipelines.batch.GcpBatchBackendSingletonActor.Bat
 import com.google.protobuf.Duration
 import com.google.cloud.batch.v1.LogsPolicy.Destination
 import com.google.common.collect.ImmutableMap
+import com.google.cloud.storage.BlobId
+import com.google.cloud.storage.BlobInfo
+import com.google.cloud.storage.Storage
+import com.google.cloud.storage.StorageOptions
+import java.nio.file.Paths
+
 
 import java.util.concurrent.TimeUnit
 //import scala.util.Try
@@ -127,6 +133,24 @@ final case class GcpBatchJob (
     catch  {
       case _: Throwable => println("Job failed")
     }
+
+  }
+
+  def uploadObjectToGcp(projectId: String, bucketName: String, objectName: String, filePath: String): Unit = {
+    val storage: Storage = StorageOptions.newBuilder.setProjectId(projectId).build.getService
+    val blobId: BlobId = BlobId.of(bucketName, objectName)
+    val blobInfo: BlobInfo = BlobInfo.newBuilder(blobId).build
+
+    var precondition: Storage.BlobWriteOption = null
+
+    if (storage.get(bucketName, objectName) == null) {
+      precondition = Storage.BlobWriteOption.doesNotExist()
+    } else {
+      precondition = Storage.BlobWriteOption.generationMatch()
+    }
+    storage.createFrom(blobInfo, Paths.get(filePath), precondition)
+
+    println("File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName)
 
   }
 
