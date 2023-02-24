@@ -1,22 +1,22 @@
 package cromwell.backend.google.pipelines.batch
 import com.google.api.gax.rpc.{FixedHeaderProvider, HeaderProvider}
-import com.google.cloud.batch.v1.BatchServiceSettings
+import com.google.cloud.batch.v1.{AllocationPolicy, BatchServiceClient, BatchServiceSettings, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, TaskGroup, TaskSpec}
 import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy}
 import com.google.cloud.batch.v1.Runnable.Container
-import com.google.cloud.batch.v1.{AllocationPolicy, BatchServiceClient, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, TaskGroup, TaskSpec}
 import cromwell.backend.google.pipelines.batch.GcpBatchBackendSingletonActor.BatchRequest
 import com.google.protobuf.Duration
 import com.google.cloud.batch.v1.LogsPolicy.Destination
 import com.google.common.collect.ImmutableMap
+
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import java.nio.file.Paths
 
-
 import java.util.concurrent.TimeUnit
-//import scala.util.Try
+import org.slf4j.{Logger, LoggerFactory}
+
 
 final case class GcpBatchJob (
                              jobSubmission: BatchRequest,
@@ -24,15 +24,17 @@ final case class GcpBatchJob (
                              //cpuPlatform: String,
                              memory: Long,
                              machineType: String,
-                             //dockerImage: String,
                              runtimeAttributes: GcpBatchRuntimeAttributes
                             ) {
+
+  val log: Logger = LoggerFactory.getLogger(RunStatus.toString)
 
   // VALUES HERE
   val entryPoint = "/bin/sh"
   val retryCount = 2
   val durationInSeconds: Long = 3600
   val taskCount: Long = 1
+  val gcpBatchCommand: String = jobSubmission.gcpBatchCommand
 
   // set user agent
   val user_agent_header = "user-agent"
@@ -49,12 +51,12 @@ final case class GcpBatchJob (
     .format("projects/%s/locations/%s", jobSubmission
       .projectId, jobSubmission
       .region))
-
   private val cpuPlatform =  runtimeAttributes.cpuPlatform.getOrElse("")
 
-  println(cpuPlatform)
+  log.info(cpuPlatform)
+
   private def createRunnable(dockerImage: String, entryPoint: String): Runnable = {
-    val runnable = Runnable.newBuilder.setContainer((Container.newBuilder.setImageUri(dockerImage).setEntrypoint(entryPoint).addCommands("-c").addCommands("echo Hello World!").build)).build
+    val runnable = Runnable.newBuilder.setContainer((Container.newBuilder.setImageUri(dockerImage).setEntrypoint(entryPoint).addCommands("-c").addCommands(gcpBatchCommand).build)).build
     runnable
   }
 
@@ -70,7 +72,6 @@ final case class GcpBatchJob (
   def submitJob(): Unit = {
 
     try {
-      //val runnable = Runnable.newBuilder.setContainer((Container.newBuilder.setImageUri(dockerImage).setEntrypoint(entryPoint).addCommands("-c").addCommands("echo Hello World!").build)).build
       val runnable = createRunnable(dockerImage = runtimeAttributes.dockerImage, entryPoint = entryPoint)
       val computeResource = ComputeResource
         .newBuilder
@@ -122,16 +123,18 @@ final case class GcpBatchJob (
         .setJobId(jobSubmission
           .jobName)
         .build()
-      batchServiceClient
+      val result = batchServiceClient
         .createJobCallable
         .futureCall(createJobRequest)
-        .get(3, TimeUnit
-          .MINUTES)
-      println("job submitted")
+        .get(5, TimeUnit
+          .SECONDS)
+      log.info("job submitted")
+      batchServiceClient.close()
+      log.info(result.getName)
 
     }
     catch  {
-      case _: Throwable => println("Job failed")
+      case _: Throwable => log.info("Job failed")
     }
 
   }
@@ -154,15 +157,5 @@ final case class GcpBatchJob (
 
   }
 
-  /*
-  def jobGetRequest(jobId: String) = {
-    val gcpBatchPoll = new GcpBatchJobGetRequest
-    val jobDetail = gcpBatchPoll.GetJob(jobId)
 
-  }
-  def status(jobId: String): Try[RunStatus] = for {
-    statusResult <- Try(jobGetRequest(jobId).toString)
-    //runStatus <- RunStatus.fro
-  }
-  */
 }
