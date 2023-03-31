@@ -1,24 +1,24 @@
 package cromwell.backend.google.pipelines.batch.runnable
 
 
-//import com.google.cloud.batch.v1.{Runnable, Volume}
-//import com.google.cloud.batch.v1.Runnable.Container
-//import scala.concurrent.duration._
-//import cromwell.backend.google.pipelines.common.action.ActionCommands
-//import cromwell.backend.google.pipelines.common.action.ActionUtils._
-//import cromwell.backend.google.pipelines.common.action.ActionLabels._
+import com.google.cloud.batch.v1.{Runnable, Volume}
+import com.google.cloud.batch.v1.Runnable.Container
+import scala.concurrent.duration._
+import cromwell.backend.google.pipelines.common.action.ActionCommands
+import cromwell.backend.google.pipelines.common.action.ActionUtils._
+import cromwell.backend.google.pipelines.common.action.ActionLabels._
 
-//import mouse.all._
+import mouse.all._
 
-//import scala.jdk.CollectionConverters._
-//import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
+import scala.concurrent.duration._
 
 /**
  * Utility singleton to create high level batch runnables.
  */
 
 object RunnableBuilder {
-/*
+
   implicit class EnhancedRunnable(val runnable: Runnable) extends AnyVal {
 
 
@@ -61,10 +61,11 @@ object RunnableBuilder {
 
      */
 
+    /*
     def withVolumes(volumes: Volume): Runnable.Builder = new Runnable()
       .toBuilder
       .setContainer(Container.newBuilder.setVolumes(volumes))
-
+*/
   }
 
   def cloudSdkAction: Runnable.Builder = new Runnable()
@@ -102,13 +103,11 @@ object RunnableBuilder {
     new Runnable().toBuilder.setContainer(Container.newBuilder.setImageUri(docker).addCommands(scriptContainerPath).setEntrypoint(jobShell))
   }
 
-  /*
-  def cloudSdkShellAction(shellCommand: String)(volumes: Volume,
-                                                labels: Map[String, String] = Map.empty,
-                                                timeout: Duration = Duration.Inf): Runnable.Builder = {
+
+  def cloudSdkShellAction(shellCommand: String)(timeout: Duration = Duration.Inf): Runnable.Builder = {
     //withVolumes(volumes)
     cloudSdkAction
-      .setContainer(Container.newBuilder.addVolumes(volumes))
+      //.setContainer(Container.newBuilder.addVolumes(volumes))
       //.withEntrypointCommand(
       //  "/bin/sh",
       //  "-c",
@@ -119,7 +118,6 @@ object RunnableBuilder {
   //.withLabels(labels)
       //.withTimeout(timeout)
 
-*/
 
   /*  Needs label support
   /** Creates an Action that logs the docker command for the passed in action. */
@@ -131,6 +129,8 @@ object RunnableBuilder {
   }
 
    */
+
+  /*
 
   def timestampedMessage(message: String): String =
     s"""printf '%s %s\\n' "$$(date -u '+%Y/%m/%d %H:%M:%S')" ${shellEscaped(message)}"""
@@ -147,8 +147,10 @@ object RunnableBuilder {
       },
       timeout = 300.seconds
     )
-  }
+  }*/
 
+
+  /*
 
   def annotateTimestampedActions(description: String, loggingLabelValue: String, isAlwaysRun: Boolean = false)
                                 (actions: List[Runnable]): List[Runnable] = {
@@ -157,6 +159,7 @@ object RunnableBuilder {
     val done = List(logTimestampedAction(s"Done $description.", labels).buildPartial.withAlwaysRun(isAlwaysRun))
     starting ++ actions ++ done
   }
+   */
 
 
   /*
@@ -172,6 +175,4 @@ object RunnableBuilder {
     }
 
    */
-
- */
 }
