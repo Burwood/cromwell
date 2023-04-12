@@ -2,7 +2,8 @@ package cromwell.backend.google.pipelines.batch.api
 
 import com.google.cloud.batch.v1.AllocationPolicy.Accelerator
 import com.google.cloud.batch.v1.{GetJobRequest, JobName}
-import cromwell.backend.google.pipelines.batch.runnable.{ContainerSetup, RunnableUtils, UserRunnable}
+import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.runnable.{ContainerSetup, Localization, RunnableUtils, UserRunnable}
 import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest, RunStatus}
 import cromwell.core.WorkflowId
 
@@ -19,7 +20,12 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.jdk.CollectionConverters._
 
-class GcpBatchRequestFactoryImpl extends GcpBatchRequestFactory with BatchUtilityConversions with UserRunnable with ContainerSetup {
+class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransferConfiguration) extends GcpBatchRequestFactory
+  with BatchUtilityConversions
+  with UserRunnable
+  with ContainerSetup
+  with Localization {
+
   override def queryRequest(jobName: JobName): GetJobRequest = GetJobRequest.newBuilder.setName(jobName.toString).build
 
   val log: Logger = LoggerFactory.getLogger(RunStatus.toString)
@@ -164,7 +170,7 @@ class GcpBatchRequestFactoryImpl extends GcpBatchRequestFactory with BatchUtilit
     val allVolumes = toVolumes(allDisksToBeMounted)
 
     val containerSetup: List[Runnable] = containerSetupRunnables(allVolumes)
-    val localization: List[Runnable] = List.empty //localizeActions(createPipelineParameters, mounts)
+    val localization: List[Runnable] = localizeRunnables(createParameters, allVolumes)
     val userRunnable: List[Runnable] = userRunnables(data.createParameters)
     val memoryRetryRunnable: List[Runnable] = List.empty //checkForMemoryRetryActions(createPipelineParameters, mounts)
     val deLocalization: List[Runnable] = List.empty //deLocalizeActions(createPipelineParameters, mounts)

@@ -1,24 +1,16 @@
 package cromwell.backend.google.pipelines.batch.runnable
 
-//import java.util.UUID
-//import akka.http.scaladsl.model.ContentType
-//import common.util.StringUtil._
-
-import scala.concurrent.duration._
-import mouse.all._
-import cromwell.core.path.Path
-import cromwell.filesystems.gcs.GcsPath
-import org.apache.commons.text.StringEscapeUtils
+import akka.http.scaladsl.model.ContentType
+import common.util.StringUtil._
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.common.action.ActionUtils._
-
+import cromwell.core.path.Path
+import cromwell.filesystems.gcs.GcsPath
 import cromwell.filesystems.gcs.RequesterPaysErrors._
+import mouse.all._
+import org.apache.commons.text.StringEscapeUtils
 
-//import org.apache.commons.codec.binary.Base64
-//import org.apache.commons.text.StringEscapeUtils
-
-//import java.nio.charset.StandardCharsets
-//import scala.concurrent.duration._
+import scala.concurrent.duration._
 
 object RunnableCommands {
   implicit val waitBetweenRetries: FiniteDuration = 5.seconds
@@ -35,6 +27,52 @@ object RunnableCommands {
     def escape: String = StringEscapeUtils.escapeXSI(path.pathAsString)
   }
 
+  private def makeContentTypeFlag(contentType: Option[ContentType]) = contentType.map(ct => s"""-h "Content-Type: $ct"""").getOrElse("")
+
+  def makeContainerDirectory(containerPath: Path) = s"mkdir -p ${containerPath.escape}"
+
+  def delocalizeDirectory(containerPath: Path, cloudPath: Path, contentType: Option[ContentType])
+                         (implicit gcsTransferConfiguration: GcsTransferConfiguration): String = {
+    retry {
+      recoverRequesterPaysError(cloudPath) { flag =>
+        s"rm -f $$HOME/.config/gcloud/gce && " +
+          s"gsutil $flag ${contentType |> makeContentTypeFlag} -m rsync -r ${containerPath.escape} ${cloudPath.escape}"
+      }
+    }
+  }
+
+  /**
+    * As per https://cloud.google.com/storage/docs/gsutil/addlhelp/HowSubdirectoriesWork, rule #2
+    * If one attempts a
+    * gsutil cp /local/file.txt gs://bucket/subdir/file.txt
+    * AND
+    * there exists a folder gs://bucket/subdir/file.txt_thisCouldBeAnything
+    * then gs://bucket/subdir/file.txt will be treated as a directory, and /local/file.txt will be copied under gs://bucket/subdir/file.txt/file.txt
+    * and not gs://bucket/subdir/file.txt.
+    *
+    * By instead using the parent directory (and ensuring it ends with a slash), gsutil will treat that as a directory and put the file under it.
+    * So the final gsutil command will look something like gsutil cp /local/file.txt gs://bucket/subdir/
+    */
+  def delocalizeFile(containerPath: Path, cloudPath: Path, contentType: Option[ContentType])
+                    (implicit gcsTransferConfiguration: GcsTransferConfiguration): String = {
+    retry {
+      recoverRequesterPaysError(cloudPath) { flag =>
+        s"rm -f $$HOME/.config/gcloud/gce && " +
+          s"gsutil $flag ${contentType |> makeContentTypeFlag} cp ${containerPath.escape} ${cloudPath.parent.escape.ensureSlashed}"
+      }
+    }
+  }
+
+  def ifExist(containerPath: Path)(f: => String) = s"if [ -e ${containerPath.escape} ]; then $f; fi"
+
+  def every(duration: FiniteDuration)(f: => String): String =
+    s"""while true; do
+       |  (
+       |    $f
+       |  ) > /dev/null 2>&1
+       |  sleep ${duration.toSeconds}
+       |done""".stripMargin
+
   def retry(f: => String)(implicit gcsTransferConfiguration: GcsTransferConfiguration, wait: FiniteDuration): String = {
     s"""for i in $$(seq ${gcsTransferConfiguration.transferAttempts}); do
        |  (
@@ -50,6 +88,25 @@ object RunnableCommands {
        |  fi
        |done
        |exit "$$RC"""".stripMargin
+  }
+
+  def delocalizeFileOrDirectory(containerPath: Path, cloudPath: Path, contentType: Option[ContentType])
+                               (implicit gcsTransferConfiguration: GcsTransferConfiguration): String = {
+    s"""if [ -d ${containerPath.escape} ]; then
+       |  ${delocalizeDirectory(containerPath, cloudPath, contentType)}
+       |else
+       |  ${delocalizeFile(containerPath, cloudPath, contentType)}
+       |fi""".stripMargin
+  }
+
+  def localizeDirectory(cloudPath: Path, containerPath: Path)
+                       (implicit gcsTransferConfiguration: GcsTransferConfiguration): String = {
+    retry {
+      recoverRequesterPaysError(cloudPath) { flag =>
+        s"${containerPath |> makeContainerDirectory} && " +
+          s"rm -f $$HOME/.config/gcloud/gce && gsutil $flag -m rsync -r ${cloudPath.escape} ${containerPath.escape}"
+      }
+    }
   }
 
   def localizeFile(cloudPath: Path, containerPath: Path)
