@@ -3,7 +3,7 @@ package cromwell.backend.google.pipelines.batch.api
 import com.google.cloud.batch.v1.AllocationPolicy.Accelerator
 import com.google.cloud.batch.v1.{GetJobRequest, JobName}
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
-import cromwell.backend.google.pipelines.batch.runnable.{ContainerSetup, Localization, RunnableUtils, UserRunnable}
+import cromwell.backend.google.pipelines.batch.runnable._
 import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest, RunStatus}
 import cromwell.core.WorkflowId
 
@@ -24,7 +24,8 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
   with BatchUtilityConversions
   with UserRunnable
   with ContainerSetup
-  with Localization {
+  with Localization
+  with Delocalization {
 
   override def queryRequest(jobName: JobName): GetJobRequest = GetJobRequest.newBuilder.setName(jobName.toString).build
 
@@ -173,7 +174,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val localization: List[Runnable] = localizeRunnables(createParameters, allVolumes)
     val userRunnable: List[Runnable] = userRunnables(data.createParameters)
     val memoryRetryRunnable: List[Runnable] = List.empty //checkForMemoryRetryActions(createPipelineParameters, mounts)
-    val deLocalization: List[Runnable] = List.empty //deLocalizeActions(createPipelineParameters, mounts)
+    val deLocalization: List[Runnable] = deLocalizeRunnables(createParameters, allVolumes)
     val monitoringSetup: List[Runnable] = List.empty //monitoringSetupActions(createPipelineParameters, mounts)
     val monitoringShutdown: List[Runnable] = List.empty //monitoringShutdownActions(createPipelineParameters)
     val checkpointingStart: List[Runnable] = List.empty //checkpointingSetupActions(createPipelineParameters, mounts)

@@ -93,9 +93,9 @@ object RunnableUtils {
                             isBackground: Runnable => Boolean,
                          ): List[Runnable] = {
     val toBeSortedRunnables = localization ++ userRunnable ++ memoryRetryRunnable ++ deLocalization
-    val sortedRunnables = toBeSortedRunnables.sortWith({
+    val sortedRunnables = toBeSortedRunnables.sortWith {
       case (runnable, _) => isBackground(runnable)
-    })
+    }
 
     sshAccess ++ containerSetup ++ monitoringSetup ++ checkpointingStart ++ sortedRunnables ++ checkpointingShutdown ++ monitoringShutdown
   }
