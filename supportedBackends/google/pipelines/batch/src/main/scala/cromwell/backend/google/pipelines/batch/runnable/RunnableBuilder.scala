@@ -85,6 +85,12 @@ object RunnableBuilder {
     //.withTimeout(timeout)
   }
 
+  def checkForMemoryRetryRunnable(retryLookupKeys: List[String]): Runnable.Builder = {
+    cloudSdkShellRunnable(RunnableCommands.checkIfStderrContainsRetryKeys(retryLookupKeys))(
+      labels = Map(Key.Tag -> Value.RetryWithMoreMemory)
+    )
+      .withAlwaysRun(true)
+  }
 
   //  Needs label support
   // Creates a Runnable that logs the docker command for the passed in runnable.
