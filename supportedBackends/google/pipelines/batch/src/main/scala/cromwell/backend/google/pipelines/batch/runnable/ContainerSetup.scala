@@ -13,7 +13,7 @@ trait ContainerSetup {
     // As opposed to V1, the container root does not have a 777 umask, which can cause issues for docker running as non root
     // Run a first action to create the root and give it the right permissions
     val containerRootSetup = RunnableBuilder
-      .cloudSdkShellAction(s"mkdir -p $containerRoot && chmod -R a+rwx $containerRoot")(
+      .cloudSdkShellRunnable(s"mkdir -p $containerRoot && chmod -R a+rwx $containerRoot")(
         labels = Map(Key.Tag -> Value.ContainerSetup)
       )
 
