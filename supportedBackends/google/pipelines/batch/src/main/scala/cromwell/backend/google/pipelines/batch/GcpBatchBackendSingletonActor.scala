@@ -44,7 +44,7 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
       log.info(s"Submitting job (${request.jobName}) to GCP, workflowId = ${request.workflowId}")
       Future {
         // TODO: Alex - Consider not hardcoding machineType
-        requestHandler.submit(requestFactory.submitRequest("n1-standard-4", request))
+        requestHandler.submit(requestFactory.submitRequest("e2-medium", request))
       }.onComplete {
         case Failure(exception) =>
           log.error(exception, s"Failed to submit job (${request.jobName}) to GCP, workflowId = ${request.workflowId}")

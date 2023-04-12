@@ -962,10 +962,10 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
 
   override def isDone(runStatus: RunStatus): Boolean = {
     runStatus match {
-      case _: RunStatus.Succeeded =>
+      case _: RunStatus.Succeeded | RunStatus.Succeeded =>
         log.info("GCP batch job succeeded matched isDone")
         true
-      case _: RunStatus.Failed =>
+      case _: RunStatus.Failed | RunStatus.Failed =>
         log.info("GCP Job failed and matched isDone")
         true
       case _ =>
