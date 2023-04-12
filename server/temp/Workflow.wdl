@@ -10,6 +10,7 @@ task myTask {
     runtime {
       docker: "ubuntu:latest"
       bootDiskSizeGb: 50
+      zones: "us-south1-a"
     }
 
 }
