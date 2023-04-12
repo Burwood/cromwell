@@ -58,27 +58,27 @@ trait BatchUtilityConversions {
   }
 
   private def toDisk(disk: GcpBatchAttachedDisk): AttachedDisk = {
-      val googleDisk = Disk
-        .newBuilder
-        .setSizeGb(disk.sizeGb.toLong)
-        .setType(toBatchDiskType(disk.diskType))
-        .build
+    val googleDisk = Disk
+      .newBuilder
+      .setSizeGb(disk.sizeGb.toLong)
+      .setType(toBatchDiskType(disk.diskType))
 
-      val googleAttachedDisk = AttachedDisk
-        .newBuilder
-        .setDeviceName(disk.name)
-        .setNewDisk(googleDisk)
-        .build
-      googleAttachedDisk
+    disk match {
+      case refDisk: GcpBatchReferenceFilesDisk =>
+        googleDisk.setImage(refDisk.image)
+          .build
+      case _ =>
+        googleDisk.build
     }
 
-  //disk match {
-  //  case refDisk: GcpBatchReferenceFilesDisk =>
-  //    googleDisk.setSourceImage(refDisk.image)
-  //  case _ =>
-  //    googleDisk
-  //}
+    val googleAttachedDisk = AttachedDisk
+      .newBuilder
+      .setDeviceName(disk.name)
+      .setNewDisk(googleDisk)
+      .build
+    googleAttachedDisk
 
+  }
 
   private def toBatchDiskType(diskType: DiskType) = diskType match {
     case DiskType.HDD => "pd-standard"
