@@ -2,7 +2,9 @@ package cromwell.backend.google.pipelines.batch.runnable
 
 import com.google.cloud.batch.v1.Runnable
 import com.google.cloud.batch.v1.Runnable.Container
+import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.batch.{BatchParameter, GcpBatchInput, GcpBatchOutput}
+import cromwell.core.path.Path
 
 import scala.jdk.CollectionConverters._
 
@@ -61,6 +63,40 @@ object RunnableBuilder {
 
   private def cloudSdkContainerBuilder: Container.Builder = Container.newBuilder.setImageUri(CloudSdkImage)
 
+  def monitoringImageScriptRunnable(cloudPath: Path, containerPath: Path)
+                                 (implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
+    val command = RunnableCommands.localizeFile(cloudPath, containerPath)
+    val labels = Map(Key.Tag -> Value.Localization)
+    cloudSdkShellRunnable(command)(labels = labels)
+  }
+
+  def backgroundRunnable(image: String,
+                       command: List[String],
+//                       environment: Map[String, String],
+                      ): Runnable.Builder = {
+    withImage(image)
+      .withEntrypointCommand(command: _*)
+      .withRunInBackground(true)
+//      .withIgnoreExitStatus(true)
+//      .setEnvironment(environment.asJava)
+//      .withLabels(Map(Key.Tag -> Value.Monitoring))
+//      .setPidNamespace(backgroundActionPidNamespace)
+  }
+
+
+  def terminateBackgroundRunnablesRunnable(): Runnable.Builder = {
+    cloudSdkShellRunnable(terminateAllBackgroundRunnablesCommand)(labels = Map(Key.Tag -> Value.Monitoring))
+      .withAlwaysRun(true)
+//      .setPidNamespace(backgroundActionPidNamespace)
+  }
+
+  def gcsFileDeletionRunnable(cloudPath: String): Runnable.Builder = {
+    cloudSdkShellRunnable(
+      s"""gsutil rm '$cloudPath'"""
+    )(labels = Map(Key.Tag -> Value.Monitoring))
+//      .withIgnoreExitStatus(true)
+  }
+
   //privateDockerKeyAndToken: Option[CreatePipelineDockerKeyAndToken],
   //fuseEnabled: Boolean)
   def userRunnable(docker: String,
@@ -85,14 +121,20 @@ object RunnableBuilder {
     //.withTimeout(timeout)
   }
 
+  def checkForMemoryRetryRunnable(retryLookupKeys: List[String]): Runnable.Builder = {
+    cloudSdkShellRunnable(RunnableCommands.checkIfStderrContainsRetryKeys(retryLookupKeys))(
+      labels = Map(Key.Tag -> Value.RetryWithMoreMemory)
+    )
+      .withAlwaysRun(true)
+  }
 
   //  Needs label support
   // Creates a Runnable that logs the docker command for the passed in runnable.
-  def describeDocker(description: String, runnable: Runnable): Runnable = {
+  def describeDocker(description: String, runnable: Runnable.Builder): Runnable.Builder = {
     logTimestampedRunnable(
-      s"Running $description: ${RunnableBuilder.toDockerRun(runnable)}",
+      s"Running $description: ${toDockerRun(runnable)}",
       Map.empty
-    ).build()
+    )
   }
 
   private def timestampedMessage(message: String): String =
@@ -166,7 +208,7 @@ object RunnableBuilder {
   }
 
   // Converts an Runnable to a `docker run ...` command runnable in the shell.
-  private[runnable] def toDockerRun(runnable: Runnable): String = {
+  private[runnable] def toDockerRun(runnable: Runnable.Builder): String = {
     runnable.getContainer
       .getCommandsList
       .asScala

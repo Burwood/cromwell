@@ -3,16 +3,21 @@ package cromwell.backend.google.pipelines.batch.runnable
 import akka.http.scaladsl.model.ContentType
 import common.util.StringUtil._
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
-import cromwell.backend.google.pipelines.common.action.ActionUtils._
 import cromwell.core.path.Path
 import cromwell.filesystems.gcs.GcsPath
 import cromwell.filesystems.gcs.RequesterPaysErrors._
 import mouse.all._
+import org.apache.commons.codec.binary.Base64
 import org.apache.commons.text.StringEscapeUtils
 
+import java.nio.charset.StandardCharsets
+import java.util.UUID
 import scala.concurrent.duration._
 
 object RunnableCommands {
+
+  import RunnableUtils._
+
   implicit val waitBetweenRetries: FiniteDuration = 5.seconds
 
   implicit class EnhancedCromwellPath(val path: Path) extends AnyVal {
@@ -59,6 +64,20 @@ object RunnableCommands {
       recoverRequesterPaysError(cloudPath) { flag =>
         s"rm -f $$HOME/.config/gcloud/gce && " +
           s"gsutil $flag ${contentType |> makeContentTypeFlag} cp ${containerPath.escape} ${cloudPath.parent.escape.ensureSlashed}"
+      }
+    }
+  }
+
+  /**
+    * delocalizeFile necessarily copies the file to the same name. Use this if you want to to specify a name different from the original
+    * Make sure that there's no object named "yourfinalname_something" (see above) in the same cloud directory.
+    */
+  def delocalizeFileTo(containerPath: Path, cloudPath: Path, contentType: Option[ContentType])
+                      (implicit gcsTransferConfiguration: GcsTransferConfiguration): String = {
+    retry {
+      recoverRequesterPaysError(cloudPath) { flag =>
+        s"rm -f $$HOME/.config/gcloud/gce && " +
+          s"gsutil $flag ${contentType |> makeContentTypeFlag} cp ${containerPath.escape} ${cloudPath.escape}"
       }
     }
   }
@@ -141,5 +160,26 @@ object RunnableCommands {
        |  exit 0
        |fi""".stripMargin
   }
+
+  def checkIfStderrContainsRetryKeys(retryLookupKeys: List[String]): String = {
+    val lookupKeysAsString = retryLookupKeys.mkString("|")
+    s"grep -E -q '$lookupKeysAsString' /cromwell_root/stderr ; echo $$? > /cromwell_root/memory_retry_rc"
+  }
+
+  def multiLineCommandTransformer(shell: String)(commandString: String): String = {
+    val randomUuid = UUID.randomUUID().toString
+    val withBashShebang = s"#!/bin/bash\n\n$commandString"
+    val base64EncodedScript = Base64.encodeBase64String(withBashShebang.getBytes(StandardCharsets.UTF_8))
+    val scriptPath = s"/tmp/$randomUuid.sh"
+
+    s"""python3 -c 'import base64; print(base64.b64decode("$base64EncodedScript").decode("utf-8"));' """ +
+      s"""> $scriptPath && """ +
+      s"chmod u+x $scriptPath && " +
+      s"$shell $scriptPath"
+  }
+
+  def multiLineCommand(commandString: String): String = multiLineCommandTransformer("sh")(commandString)
+
+  def multiLineBinBashCommand(commandString: String): String = multiLineCommandTransformer("/bin/bash")(commandString)
 
 }

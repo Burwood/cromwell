@@ -58,7 +58,7 @@ trait Localization {
     } else List[Runnable.Builder]()
 
     // Any "classic" PAPI v2 one-at-a-time localizations for non-GCS inputs.
-    val singletonLocalizations = createPipelineParameters.inputOutputParameters.fileInputParameters.flatMap(_.toRunnables(volumes).toList)
+    val singletonLocalizations = createPipelineParameters.inputOutputParameters.fileInputParameters.flatMap(_.toRunnables(volumes))
 
     val localizations =
       localizeGcsTransferLibrary ::

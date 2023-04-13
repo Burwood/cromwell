@@ -3,8 +3,9 @@ package cromwell.backend.google.pipelines.batch.api
 import com.google.cloud.batch.v1.{CreateJobRequest, GetJobRequest, JobName}
 import cromwell.backend.BackendJobDescriptor
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.VirtualPrivateCloudConfiguration
-import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
 import cromwell.backend.google.pipelines.batch._
+import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
+import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
 import cromwell.backend.google.pipelines.common.PipelinesApiLiteralInput
 import cromwell.backend.google.pipelines.common.monitoring.CheckpointingConfiguration
 import cromwell.core.path.Path
@@ -83,7 +84,7 @@ object GcpBatchRequestFactory {
                                       retryWithMoreMemoryKeys: Option[List[String]],
                                       fuseEnabled: Boolean,
                                       referenceDisksForLocalizationOpt: Option[List[GcpBatchAttachedDisk]],
-                                      //monitoringImage: MonitoringImage,
+                                      monitoringImage: MonitoringImage,
                                       checkpointingConfiguration: CheckpointingConfiguration,
                                       enableSshAccess: Boolean,
                                       //vpcNetworkAndSubnetworkProjectLabels: Option[VpcAndSubnetworkProjectLabelValues],

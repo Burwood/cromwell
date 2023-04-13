@@ -18,7 +18,7 @@ trait UserRunnable {
       //createPipelineParameters.fuseEnabled
     )
 
-    val describeAction = RunnableBuilder.describeDocker("user action", userRunnable.build)
-    List(describeAction, userRunnable.build)
+    val describeRunnable = RunnableBuilder.describeDocker("user runnable", userRunnable)
+    List(describeRunnable, userRunnable).map(_.build)
   }
 }
