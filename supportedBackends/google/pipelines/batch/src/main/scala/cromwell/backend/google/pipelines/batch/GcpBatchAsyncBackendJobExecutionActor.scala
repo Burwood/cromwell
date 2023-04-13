@@ -2,6 +2,7 @@ package cromwell.backend.google.pipelines.batch
 
 import akka.http.scaladsl.model.{ContentType, ContentTypes}
 import com.google.cloud.batch.v1.JobName
+import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
 //import cats.syntax.validated._
 import cats.implicits._
 import com.google.cloud.storage.contrib.nio.CloudStorageOptions
@@ -567,19 +568,14 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
 
         val workflowOptions = workflowDescriptor.workflowOptions
 
-
-        /*
-        val monitoringImage =
-          new MonitoringImage(
-            jobDescriptor = jobDescriptor,
-            workflowOptions = workflowOptions,
-            workflowPaths = workflowPaths,
-            commandDirectory = commandDirectory,
-            workingDisk = workingDisk,
-            localMonitoringImageScriptPath = localMonitoringImageScriptPath,
-          )
-
-        */
+        val monitoringImage = new MonitoringImage(
+          jobDescriptor = jobDescriptor,
+          workflowOptions = workflowOptions,
+          workflowPaths = workflowPaths,
+          commandDirectory = commandDirectory,
+          workingDisk = workingDisk,
+          localMonitoringImageScriptPath = localMonitoringImageScriptPath,
+        )
 
         val checkpointingConfiguration =
           new CheckpointingConfiguration(
@@ -628,7 +624,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
           retryWithMoreMemoryKeys = retryWithMoreMemoryKeys,
           fuseEnabled = fuseEnabled(jobDescriptor.workflowDescriptor),
           referenceDisksForLocalizationOpt = referenceDisksToMount,
-          //monitoringImage = monitoringImage,
+          monitoringImage = monitoringImage,
           checkpointingConfiguration,
           enableSshAccess = enableSshAccess,
           //vpcNetworkAndSubnetworkProjectLabels = data.vpcNetworkAndSubnetworkProjectLabels,

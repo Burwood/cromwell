@@ -26,7 +26,8 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
   with ContainerSetup
   with Localization
   with Delocalization
-  with MemoryRetryCheckRunnable {
+  with MemoryRetryCheckRunnable
+  with MonitoringRunnable {
 
   override def queryRequest(jobName: JobName): GetJobRequest = GetJobRequest.newBuilder.setName(jobName.toString).build
 
@@ -174,10 +175,10 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val containerSetup: List[Runnable] = containerSetupRunnables(allVolumes)
     val localization: List[Runnable] = localizeRunnables(createParameters, allVolumes)
     val userRunnable: List[Runnable] = userRunnables(data.createParameters)
-    val memoryRetryRunnable: List[Runnable] = checkForMemoryRetryActions(createParameters, allVolumes)
+    val memoryRetryRunnable: List[Runnable] = checkForMemoryRetryRunnables(createParameters, allVolumes)
     val deLocalization: List[Runnable] = List.empty // deLocalizeRunnables(createParameters, allVolumes)
-    val monitoringSetup: List[Runnable] = List.empty //monitoringSetupActions(createPipelineParameters, mounts)
-    val monitoringShutdown: List[Runnable] = List.empty //monitoringShutdownActions(createPipelineParameters)
+    val monitoringSetup: List[Runnable] = monitoringSetupRunnables(createParameters, allVolumes)
+    val monitoringShutdown: List[Runnable] = monitoringShutdownRunnables(createParameters)
     val checkpointingStart: List[Runnable] = List.empty //checkpointingSetupActions(createPipelineParameters, mounts)
     val checkpointingShutdown: List[Runnable] = List.empty //checkpointingShutdownActions(createPipelineParameters)
     val sshAccess: List[Runnable] = List.empty //sshAccessActions(createPipelineParameters, mounts)

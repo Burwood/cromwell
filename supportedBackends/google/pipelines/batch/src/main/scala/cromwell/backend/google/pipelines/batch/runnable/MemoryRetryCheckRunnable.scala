@@ -5,7 +5,7 @@ import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.Create
 
 trait MemoryRetryCheckRunnable {
 
-  def checkForMemoryRetryActions(createPipelineParameters: CreatePipelineParameters, mounts: List[Volume]): List[Runnable] = {
+  def checkForMemoryRetryRunnables(createPipelineParameters: CreatePipelineParameters, mounts: List[Volume]): List[Runnable] = {
     createPipelineParameters.retryWithMoreMemoryKeys match {
       case Some(keys) => List(RunnableBuilder.checkForMemoryRetryRunnable(keys)).map(_.build)
       case None => List.empty[Runnable]
