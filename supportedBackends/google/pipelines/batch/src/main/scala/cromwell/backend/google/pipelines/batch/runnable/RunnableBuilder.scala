@@ -90,6 +90,13 @@ object RunnableBuilder {
 //      .setPidNamespace(backgroundActionPidNamespace)
   }
 
+  def gcsFileDeletionRunnable(cloudPath: String): Runnable.Builder = {
+    cloudSdkShellRunnable(
+      s"""gsutil rm '$cloudPath'"""
+    )(labels = Map(Key.Tag -> Value.Monitoring))
+//      .withIgnoreExitStatus(true)
+  }
+
   //privateDockerKeyAndToken: Option[CreatePipelineDockerKeyAndToken],
   //fuseEnabled: Boolean)
   def userRunnable(docker: String,

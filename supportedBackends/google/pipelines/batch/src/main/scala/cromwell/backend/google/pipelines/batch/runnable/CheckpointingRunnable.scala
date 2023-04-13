@@ -1,0 +1,49 @@
+package cromwell.backend.google.pipelines.batch.runnable
+
+import com.google.cloud.batch.v1.{Runnable, Volume}
+import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
+
+trait CheckpointingRunnable {
+  def checkpointingSetupRunnables(createParameters: CreatePipelineParameters,
+                                mounts: List[Volume]
+                               ): List[Runnable] = {
+    val result = createParameters.runtimeAttributes.checkpointFilename.map { checkpointFilename =>
+      val checkpointingImage = RunnableUtils.CloudSdkImage
+      val checkpointingCommand = createParameters.checkpointingConfiguration.checkpointingCommand(checkpointFilename, RunnableCommands.multiLineBinBashCommand)
+//      val checkpointingEnvironment = Map.empty[String, String]
+
+      // Initial sync from cloud:
+      val initialCheckpointSyncRunnable = RunnableBuilder.cloudSdkShellRunnable(
+        createParameters.checkpointingConfiguration.localizePreviousCheckpointCommand(checkpointFilename)
+      )(labels = Map.empty)
+      val describeInitialCheckpointingSyncRunnable = RunnableBuilder.describeDocker("initial checkpointing sync", initialCheckpointSyncRunnable)
+
+      // Background upload runnable:
+      val backgroundCheckpointingRunnable = RunnableBuilder.backgroundRunnable(
+        image = checkpointingImage,
+        command = checkpointingCommand,
+//        environment = checkpointingEnvironment,
+//        mounts = mounts
+      )
+      val describeBackgroundCheckpointingRunnable = RunnableBuilder.describeDocker("begin checkpointing background runnable", backgroundCheckpointingRunnable)
+
+      List(describeInitialCheckpointingSyncRunnable, initialCheckpointSyncRunnable, describeBackgroundCheckpointingRunnable, backgroundCheckpointingRunnable)
+    }.getOrElse(Nil)
+
+    result.map(_.build)
+  }
+
+  def checkpointingShutdownRunnables(createParameters: CreatePipelineParameters): List[Runnable] = {
+    val result = createParameters.runtimeAttributes.checkpointFilename.map { checkpointFilename =>
+      val terminationRunnable = RunnableBuilder.terminateBackgroundRunnablesRunnable()
+      val describeTerminationRunnable = RunnableBuilder.describeDocker("terminate checkpointing runnable", terminationRunnable)
+
+      val deleteCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.checkpointFileCloud(checkpointFilename))
+      val deleteTmpCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.tmpCheckpointFileCloud(checkpointFilename))
+
+      List(describeTerminationRunnable, terminationRunnable, deleteCheckpointRunnable, deleteTmpCheckpointRunnable)
+    }.getOrElse(Nil)
+
+    result.map(_.build)
+  }
+}
