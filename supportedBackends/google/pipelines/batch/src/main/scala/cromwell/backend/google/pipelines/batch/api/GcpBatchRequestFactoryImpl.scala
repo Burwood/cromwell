@@ -1,21 +1,14 @@
 package cromwell.backend.google.pipelines.batch.api
 
-import com.google.cloud.batch.v1.AllocationPolicy.Accelerator
-import com.google.cloud.batch.v1.{GetJobRequest, JobName}
+import com.google.cloud.batch.v1.AllocationPolicy._
+import com.google.cloud.batch.v1.LogsPolicy.Destination
+import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, GetJobRequest, Job, JobName, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec, Volume}
+import com.google.protobuf.Duration
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
 import cromwell.backend.google.pipelines.batch.runnable._
 import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest, RunStatus}
 import cromwell.core.WorkflowId
-
-//import com.google.cloud.batch.v1.AllocationPolicy._
-import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy, ProvisioningModel}
-import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec}
-//import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy}
-import com.google.cloud.batch.v1.AllocationPolicy.AttachedDisk
-import com.google.cloud.batch.v1.LogsPolicy.Destination
-import com.google.cloud.batch.v1.Volume
-import com.google.protobuf.Duration
-import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.jdk.CollectionConverters._
@@ -182,7 +175,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val monitoringShutdown: List[Runnable] = monitoringShutdownRunnables(createParameters)
     val checkpointingStart: List[Runnable] = checkpointingSetupRunnables(createParameters, allVolumes)
     val checkpointingShutdown: List[Runnable] = checkpointingShutdownRunnables(createParameters)
-    val sshAccess: List[Runnable] = List.empty //sshAccessActions(createPipelineParameters, mounts)
 
     val sortedRunnables: List[Runnable] = RunnableUtils.sortRunnables(
       containerSetup = containerSetup,
@@ -194,7 +186,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
         monitoringShutdown = monitoringShutdown,
         checkpointingStart = checkpointingStart,
         checkpointingShutdown = checkpointingShutdown,
-        sshAccess = sshAccess,
         isBackground = _.getBackground,
       )
 

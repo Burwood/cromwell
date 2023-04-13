@@ -6,14 +6,6 @@ import net.ceedubs.ficus.Ficus._
 import org.apache.commons.text.StringEscapeUtils
 
 object RunnableUtils {
-  /** Image to use for ssh access. */
-  val sshImage = "gcr.io/cloud-genomics-pipelines/tools"
-
-  /** Entry point on the ssh image. */
-  val sshEntryPoint = "ssh-server"
-
-  /** Port mappings for the ssh container. */
-  val sshPortMappings = Map("22" -> Int.box(22))
 
   /*
    * At the moment, cloud-sdk (924MB for 276.0.0-slim) and stedolan/jq (182MB) decompressed ~= 1.1 GB
@@ -89,7 +81,6 @@ object RunnableUtils {
                             monitoringShutdown: List[Runnable],
                             checkpointingStart: List[Runnable],
                             checkpointingShutdown: List[Runnable],
-                            sshAccess: List[Runnable],
                             isBackground: Runnable => Boolean,
                          ): List[Runnable] = {
     val toBeSortedRunnables = localization ++ userRunnable ++ memoryRetryRunnable ++ deLocalization
@@ -97,6 +88,7 @@ object RunnableUtils {
       case (runnable, _) => isBackground(runnable)
     }
 
-    sshAccess ++ containerSetup ++ monitoringSetup ++ checkpointingStart ++ sortedRunnables ++ checkpointingShutdown ++ monitoringShutdown
+    // NOTE: ssh-access is provided natively by GCP Batch
+    containerSetup ++ monitoringSetup ++ checkpointingStart ++ sortedRunnables ++ checkpointingShutdown ++ monitoringShutdown
   }
 }
