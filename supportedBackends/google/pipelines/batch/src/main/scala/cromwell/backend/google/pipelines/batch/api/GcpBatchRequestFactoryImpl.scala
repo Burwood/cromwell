@@ -154,7 +154,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
     println(f"command script container path ${data.createParameters.commandScriptContainerPath}")
     println(f"cloud workflow root ${data.createParameters.cloudWorkflowRoot}")
-    println(f"all parameters ${data.createParameters.allParameters}")
+    println(f"all parameters:\n ${data.createParameters.allParameters.mkString("\n")}")
 
     // parse preemption value and set value for Spot. Spot is replacement for preemptible
     val spotModel = toProvisioningModel(runtimeAttributes.preemptible)
@@ -177,7 +177,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val localization: List[Runnable] = localizeRunnables(createParameters, allVolumes)
     val userRunnable: List[Runnable] = userRunnables(data.createParameters)
     val memoryRetryRunnable: List[Runnable] = checkForMemoryRetryRunnables(createParameters, allVolumes)
-    val deLocalization: List[Runnable] = List.empty // deLocalizeRunnables(createParameters, allVolumes)
+    val deLocalization: List[Runnable] = deLocalizeRunnables(createParameters, allVolumes)
     val monitoringSetup: List[Runnable] = monitoringSetupRunnables(createParameters, allVolumes)
     val monitoringShutdown: List[Runnable] = monitoringShutdownRunnables(createParameters)
     val checkpointingStart: List[Runnable] = checkpointingSetupRunnables(createParameters, allVolumes)

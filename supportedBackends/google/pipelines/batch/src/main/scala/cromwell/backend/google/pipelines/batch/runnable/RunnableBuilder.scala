@@ -100,7 +100,7 @@ object RunnableBuilder {
   //privateDockerKeyAndToken: Option[CreatePipelineDockerKeyAndToken],
   //fuseEnabled: Boolean)
   def userRunnable(docker: String,
-                   command: String,
+                   scriptContainerPath: String,
                    jobShell: String): Runnable.Builder = {
 
 //    val dockerImageIdentifier = DockerImageIdentifier.fromString(docker)
@@ -114,8 +114,7 @@ object RunnableBuilder {
     val container = Container.newBuilder
       .setImageUri(docker)
       .setEntrypoint(jobShell)
-      .addCommands("-c") // TODO: Verify whether this is still required
-      .addCommands(command)
+      .addCommands(scriptContainerPath)
     Runnable.newBuilder().setContainer(container)
     //.withLabels(labels)
     //.withTimeout(timeout)
