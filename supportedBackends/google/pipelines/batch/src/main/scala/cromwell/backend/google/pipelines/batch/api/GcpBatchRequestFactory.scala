@@ -86,10 +86,9 @@ object GcpBatchRequestFactory {
                                       referenceDisksForLocalizationOpt: Option[List[GcpBatchAttachedDisk]],
                                       monitoringImage: MonitoringImage,
                                       checkpointingConfiguration: CheckpointingConfiguration,
-                                      enableSshAccess: Boolean,
+                                      enableSshAccess: Boolean
                                       //vpcNetworkAndSubnetworkProjectLabels: Option[VpcAndSubnetworkProjectLabelValues],
                                       //dockerImageCacheDiskOpt: Option[String]
-                                      gcpBatchCommand: String // TODO: Alex - verify whether we actually need this
                                      ) {
     def literalInputs = inputOutputParameters.literalInputParameters
 

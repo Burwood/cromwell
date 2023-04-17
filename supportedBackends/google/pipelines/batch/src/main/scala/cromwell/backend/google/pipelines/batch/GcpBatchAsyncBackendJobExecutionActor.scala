@@ -134,10 +134,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
   import GcpBatchAsyncBackendJobExecutionActor._
   override lazy val ioCommandBuilder: IoCommandBuilder = GcsBatchCommandBuilder
 
-  lazy val gcpBatchCommand: String = jobDescriptor.taskCall.callable.commandTemplateString(Map.empty)
   lazy val workflowId: WorkflowId = jobDescriptor.workflowDescriptor.id
-  //lazy val gcpBootDiskSizeGb = runtimeAttributes.bootDiskSize
-  //println(f"$gcpBootDiskSizeGb LOOOOOOOOOOOK")
 
   /** The type of the run info when a job is started. */
   override type StandardAsyncRunInfo = Run
@@ -626,10 +623,9 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
           referenceDisksForLocalizationOpt = referenceDisksToMount,
           monitoringImage = monitoringImage,
           checkpointingConfiguration,
-          enableSshAccess = enableSshAccess,
+          enableSshAccess = enableSshAccess
           //vpcNetworkAndSubnetworkProjectLabels = data.vpcNetworkAndSubnetworkProjectLabels,
           //dockerImageCacheDiskOpt = isDockerImageCacheUsageRequested.option(dockerImageCacheDiskOpt).flatten
-          gcpBatchCommand = gcpBatchCommand
         )
       case Some(other) =>
         throw new RuntimeException(s"Unexpected initialization data: $other")
@@ -794,6 +790,8 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
       contentType = plainTextContentType)
   }
 
+  override lazy val commandDirectory: Path = GcpBatchWorkingDisk.MountPoint
+
 
   // Primary entry point for cromwell to run GCP Batch job
   override def executeAsync(): Future[ExecutionHandle] = {
@@ -873,7 +871,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
       //_ = this.hasDockerCredentials = createParameters.privateDockerKeyAndEncryptedToken.isDefined
       //_ <- uploadGcsTransferLibrary(createParameters, gcsTransferLibraryCloudPath, gcsTransferConfiguration)
       jobName = "job-" + java.util.UUID.randomUUID.toString
-      request = GcpBatchRequest(workflowId, createParameters, jobName = jobName, gcpBatchCommand, gcpBatchParameters)
+      request = GcpBatchRequest(workflowId, createParameters, jobName = jobName, gcpBatchParameters)
       response <- runPipeline(request = request, backendSingletonActor = backendSingletonActor)
     } yield response
 

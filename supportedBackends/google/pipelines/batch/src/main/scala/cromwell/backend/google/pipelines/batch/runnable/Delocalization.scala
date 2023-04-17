@@ -6,8 +6,8 @@ import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.G
 import cromwell.backend.google.pipelines.batch.GcpBatchJobPaths.GcsDelocalizationScriptName
 import cromwell.backend.google.pipelines.batch.GcpBatchParameterConversions._
 import cromwell.backend.google.pipelines.batch.ToParameter.ops._
-import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
 import cromwell.backend.google.pipelines.batch._
+import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
 import cromwell.core.path.{DefaultPathBuilder, Path}
 import wom.runtime.WomOutputRuntimeExtractor
 
@@ -136,11 +136,17 @@ trait Delocalization {
       createPipelineParameters.outputParameters.flatMap(_.toRunnables(volumes)) ++
         runtimeExtractionRunnables
 
-    (RunnableBuilder.annotateTimestampedRunnable("delocalization", Value.Delocalization)(
+    // TODO: Rename to logs
+    val _ = List(
+      copyAggregatedLogToLegacyPath(gcsLegacyLogPath),
+      copyAggregatedLogToLegacyPathPeriodic(gcsLegacyLogPath),
+      delocalizeLogsRunnable(gcsLogDirectoryPath)
+    )
+    val all = RunnableBuilder.annotateTimestampedRunnable("delocalization", Value.Delocalization)(
       annotatedRunnables
-    ) :+
-      copyAggregatedLogToLegacyPath(gcsLegacyLogPath) :+
-      copyAggregatedLogToLegacyPathPeriodic(gcsLegacyLogPath) :+
-      delocalizeLogsRunnable(gcsLogDirectoryPath)).map(_.build)
+    ) // ++ logs
+    // TODO: Enable these ^^ once /google directory gets mounted or once we figure out where it is
+
+    all.map(_.build)
   }
 }

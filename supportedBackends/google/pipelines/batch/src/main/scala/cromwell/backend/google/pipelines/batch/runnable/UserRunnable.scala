@@ -9,9 +9,7 @@ trait UserRunnable {
   def userRunnables(createPipelineParameters: CreatePipelineParameters): List[Runnable] = {
     val userRunnable = RunnableBuilder.userRunnable(
       docker = createPipelineParameters.dockerImage,
-      // TODO: Alex - This used to be createPipelineParameters.commandScriptContainerPath.pathAsString which is /cromwell_root/script
-      // I'm not sure if such a script will include the value from gcpBatchCommand
-      command = createPipelineParameters.gcpBatchCommand,
+      scriptContainerPath = createPipelineParameters.commandScriptContainerPath.pathAsString,
       jobShell = createPipelineParameters.jobShell,
       // not necessary for now
       //createPipelineParameters.privateDockerKeyAndEncryptedToken,
