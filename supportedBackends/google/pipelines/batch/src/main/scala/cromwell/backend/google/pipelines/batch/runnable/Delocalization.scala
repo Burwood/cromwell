@@ -8,11 +8,10 @@ import cromwell.backend.google.pipelines.batch.GcpBatchParameterConversions._
 import cromwell.backend.google.pipelines.batch.ToParameter.ops._
 import cromwell.backend.google.pipelines.batch._
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
-import cromwell.core.path.{DefaultPathBuilder, Path}
+import cromwell.core.path.Path
 import wom.runtime.WomOutputRuntimeExtractor
 
 import java.util.UUID
-import scala.concurrent.duration._
 
 trait Delocalization {
 
@@ -20,30 +19,6 @@ trait Delocalization {
   import RunnableCommands._
   import RunnableLabels._
   import RunnableUtils._
-
-  private def delocalizeLogsRunnable(gcsLogPath: Path)(implicit gcsTransferConfiguration: GcsTransferConfiguration) = {
-    cloudSdkShellRunnable(
-      delocalizeDirectory(DefaultPathBuilder.build(logsRoot).get, gcsLogPath, GcpBatchAsyncBackendJobExecutionActor.plainTextContentType)
-    )(labels = Map(Key.Tag -> Value.Delocalization))
-      .withAlwaysRun(true)
-  }
-
-  // Used for the final copy of the logs to make sure we have the most up to date version before terminating the job
-  private def copyAggregatedLogToLegacyPath(gcsLegacyLogPath: Path)
-                                           (implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
-    cloudSdkShellRunnable(
-      delocalizeFileTo(DefaultPathBuilder.build(aggregatedLog).get, gcsLegacyLogPath, GcpBatchAsyncBackendJobExecutionActor.plainTextContentType)
-    )(labels = Map(Key.Tag -> Value.Delocalization)).withAlwaysRun(true)
-  }
-
-  // Periodically copies the logs out to GCS
-  private def copyAggregatedLogToLegacyPathPeriodic(gcsLegacyLogPath: Path)
-                                                   (implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
-    cloudSdkShellRunnable(
-      every(30.seconds) { delocalizeFileTo(DefaultPathBuilder.build(aggregatedLog).get, gcsLegacyLogPath, GcpBatchAsyncBackendJobExecutionActor.plainTextContentType) }
-    )(labels = Map(Key.Tag -> Value.Background))
-      .withRunInBackground(true)
-  }
 
   private def runtimeOutputExtractorRunnable(containerCallRoot: String,
                                            outputFile: String,
@@ -108,10 +83,6 @@ trait Delocalization {
     val cloudCallRoot = createPipelineParameters.cloudCallRoot
     val callExecutionContainerRoot = createPipelineParameters.commandScriptContainerPath.parent
 
-    // TODO: Consider renaming to batch-logs, find where this is created
-    val gcsLogDirectoryPath = createPipelineParameters.cloudCallRoot / "pipelines-logs"
-    val gcsLegacyLogPath = createPipelineParameters.logGcsPath
-
     /*
      * Ideally temporaryFofnForRuntimeOutputFiles should be somewhere else than the execution directory (we could mount anther directory)
      * However because it runs after everything else there's no risk of polluting the task's results and the random ID ensures we don't override anything
@@ -136,16 +107,11 @@ trait Delocalization {
       createPipelineParameters.outputParameters.flatMap(_.toRunnables(volumes)) ++
         runtimeExtractionRunnables
 
-    // TODO: Rename to logs
-    val _ = List(
-      copyAggregatedLogToLegacyPath(gcsLegacyLogPath),
-      copyAggregatedLogToLegacyPathPeriodic(gcsLegacyLogPath),
-      delocalizeLogsRunnable(gcsLogDirectoryPath)
-    )
+    // NOTE: papiv2 delocalizes logs from /google but such logs are not available on batch
+    // See: https://cloud.google.com/life-sciences/docs/reference/rpc/google.cloud.lifesciences.v2beta
     val all = RunnableBuilder.annotateTimestampedRunnable("delocalization", Value.Delocalization)(
       annotatedRunnables
-    ) // ++ logs
-    // TODO: Enable these ^^ once /google directory gets mounted or once we figure out where it is
+    )
 
     all.map(_.build)
   }
