@@ -3,6 +3,7 @@ package cromwell.backend.google.pipelines.batch
 import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.cloud.batch.v1._
 import com.google.common.collect.ImmutableMap
+import com.google.longrunning.Operation
 
 class GcpBatchApiRequestHandler {
   def submit(request: CreateJobRequest): Job = withClient { client =>
@@ -12,6 +13,10 @@ class GcpBatchApiRequestHandler {
 
   def query(request: GetJobRequest): Job = withClient { client =>
     client.getJob(request)
+  }
+
+  def abort(request: DeleteJobRequest): Operation = withClient { client =>
+    client.deleteJobCallable().call(request)
   }
 
   private def withClient[T](f: BatchServiceClient => T): T = {
