@@ -54,12 +54,6 @@ object RunnableUtils {
     StringEscapeUtils.escapeXSI(str)
   }
 
-  /** Cloud Life Sciences / Genomics Pipelines API logs directory. */
-  val logsRoot = "/google/logs"
-
-  /** Cloud Life Sciences / Genomics Pipelines API logs file. */
-  val aggregatedLog = s"$logsRoot/output"
-
   /**
     * Define a shared PID namespace for background runnable containers and their termination controller.
     * The value is "monitoring" for historical (first usage) reasons.
