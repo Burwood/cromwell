@@ -6,7 +6,6 @@ import cromwell.backend.google.pipelines.batch.io.GcpBatchWorkingDisk
 trait ContainerSetup {
   import RunnableLabels._
 
-  // TODO: Use volumes or remove the argument
   def containerSetupRunnables(volumes: List[Volume]): List[Runnable] = {
     val containerRoot = GcpBatchWorkingDisk.MountPoint.pathAsString
 
@@ -14,9 +13,12 @@ trait ContainerSetup {
     // Run a first action to create the root and give it the right permissions
     val containerRootSetup = RunnableBuilder
       .cloudSdkShellRunnable(s"mkdir -p $containerRoot && chmod -R a+rwx $containerRoot")(
+        volumes = volumes,
         labels = Map(Key.Tag -> Value.ContainerSetup)
       )
 
-    RunnableBuilder.annotateTimestampedRunnable("container setup", Value.ContainerSetup)(List(containerRootSetup)).map(_.build())
+    RunnableBuilder
+      .annotateTimestampedRunnable("container setup", Value.ContainerSetup)(volumes, List(containerRootSetup))
+      .map(_.build())
   }
 }

@@ -175,13 +175,13 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
     val containerSetup: List[Runnable] = containerSetupRunnables(allVolumes)
     val localization: List[Runnable] = localizeRunnables(createParameters, allVolumes)
-    val userRunnable: List[Runnable] = userRunnables(data.createParameters)
+    val userRunnable: List[Runnable] = userRunnables(data.createParameters, allVolumes)
     val memoryRetryRunnable: List[Runnable] = checkForMemoryRetryRunnables(createParameters, allVolumes)
     val deLocalization: List[Runnable] = deLocalizeRunnables(createParameters, allVolumes)
     val monitoringSetup: List[Runnable] = monitoringSetupRunnables(createParameters, allVolumes)
     val monitoringShutdown: List[Runnable] = monitoringShutdownRunnables(createParameters)
     val checkpointingStart: List[Runnable] = checkpointingSetupRunnables(createParameters, allVolumes)
-    val checkpointingShutdown: List[Runnable] = checkpointingShutdownRunnables(createParameters)
+    val checkpointingShutdown: List[Runnable] = checkpointingShutdownRunnables(createParameters, allVolumes)
     val sshAccess: List[Runnable] = List.empty //sshAccessActions(createPipelineParameters, mounts)
 
     val sortedRunnables: List[Runnable] = RunnableUtils.sortRunnables(
