@@ -3,6 +3,7 @@ package cromwell.backend.google.pipelines.batch
 import akka.http.scaladsl.model.{ContentType, ContentTypes}
 import com.google.cloud.batch.v1.JobName
 import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
+import wom.callable.RuntimeEnvironment
 //import cats.syntax.validated._
 import cats.implicits._
 import com.google.cloud.storage.contrib.nio.CloudStorageOptions
@@ -899,6 +900,10 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     initialInterval = 5
       .seconds, maxInterval = 20
       .seconds, multiplier = 1.1)
+
+  override lazy val runtimeEnvironment: RuntimeEnvironment = {
+    RuntimeEnvironmentBuilder(jobDescriptor.runtimeAttributes, GcpBatchWorkingDisk.MountPoint, GcpBatchWorkingDisk.MountPoint)(standardParams.minimumRuntimeSettings)
+  }
 
   protected def sendIncrementMetricsForReferenceFiles(referenceInputFilesOpt: Option[Set[GcpBatchInput]]): Unit = {
     referenceInputFilesOpt match {
