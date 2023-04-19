@@ -5,7 +5,7 @@ import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.Create
 
 trait CheckpointingRunnable {
   def checkpointingSetupRunnables(createParameters: CreatePipelineParameters,
-                                mounts: List[Volume]
+                                  volumes: List[Volume]
                                ): List[Runnable] = {
     val result = createParameters.runtimeAttributes.checkpointFilename.map { checkpointFilename =>
       val checkpointingImage = RunnableUtils.CloudSdkImage
@@ -15,7 +15,7 @@ trait CheckpointingRunnable {
       // Initial sync from cloud:
       val initialCheckpointSyncRunnable = RunnableBuilder.cloudSdkShellRunnable(
         createParameters.checkpointingConfiguration.localizePreviousCheckpointCommand(checkpointFilename)
-      )(labels = Map.empty)
+      )(volumes = volumes, labels = Map.empty)
       val describeInitialCheckpointingSyncRunnable = RunnableBuilder.describeDocker("initial checkpointing sync", initialCheckpointSyncRunnable)
 
       // Background upload runnable:
@@ -33,13 +33,13 @@ trait CheckpointingRunnable {
     result.map(_.build)
   }
 
-  def checkpointingShutdownRunnables(createParameters: CreatePipelineParameters): List[Runnable] = {
+  def checkpointingShutdownRunnables(createParameters: CreatePipelineParameters, volumes: List[Volume]): List[Runnable] = {
     val result = createParameters.runtimeAttributes.checkpointFilename.map { checkpointFilename =>
       val terminationRunnable = RunnableBuilder.terminateBackgroundRunnablesRunnable()
       val describeTerminationRunnable = RunnableBuilder.describeDocker("terminate checkpointing runnable", terminationRunnable)
 
-      val deleteCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.checkpointFileCloud(checkpointFilename))
-      val deleteTmpCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.tmpCheckpointFileCloud(checkpointFilename))
+      val deleteCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.checkpointFileCloud(checkpointFilename), volumes)
+      val deleteTmpCheckpointRunnable = RunnableBuilder.gcsFileDeletionRunnable(createParameters.checkpointingConfiguration.tmpCheckpointFileCloud(checkpointFilename), volumes)
 
       List(describeTerminationRunnable, terminationRunnable, deleteCheckpointRunnable, deleteTmpCheckpointRunnable)
     }.getOrElse(Nil)

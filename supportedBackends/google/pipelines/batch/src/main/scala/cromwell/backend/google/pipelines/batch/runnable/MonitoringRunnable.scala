@@ -6,7 +6,7 @@ import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.Create
 
 trait MonitoringRunnable {
   def monitoringSetupRunnables(createParameters: CreatePipelineParameters,
-                             mounts: List[Volume]
+                               volumes: List[Volume]
                             )(implicit gcsTransferConfiguration: GcsTransferConfiguration): List[Runnable] = {
 
     val monitoringImageScriptRunnables =
@@ -16,6 +16,7 @@ trait MonitoringRunnable {
             RunnableBuilder.monitoringImageScriptRunnable(
               script,
               createParameters.monitoringImage.monitoringImageScriptContainerPath,
+              volumes
             )
           val describeLocalizeScriptRunnable =
             RunnableBuilder.describeDocker(

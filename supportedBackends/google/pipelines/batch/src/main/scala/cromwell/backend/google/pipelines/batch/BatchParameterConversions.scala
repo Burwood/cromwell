@@ -53,12 +53,12 @@ trait GcpBatchParameterConversions {
             .withEntrypointCommand("/bin/sh", "-c", s"$createNgc; mkdir $mountpoint; $runFusera")
             .withRunInBackground(true)
 //            .withEnableFuse(true)
-          List(RunnableBuilder.describeParameter(fileInput, labels), localizationRunnables)
+          List(RunnableBuilder.describeParameter(fileInput, volumes, labels), localizationRunnables)
 
         case _: HttpPath =>
           val command = s"curl --silent --create-dirs --output ${fileInput.containerPath} ${fileInput.cloudPath}"
-          val localizationRunnables = RunnableBuilder.cloudSdkShellRunnable(command)(labels = labels)
-          List(RunnableBuilder.describeParameter(fileInput, labels), localizationRunnables)
+          val localizationRunnables = RunnableBuilder.cloudSdkShellRunnable(command)(volumes = volumes, labels = labels)
+          List(RunnableBuilder.describeParameter(fileInput, volumes, labels), localizationRunnables)
 
         case _: GcsPath =>
           // GCS paths will be localized with a separate localization script.
@@ -78,10 +78,10 @@ trait GcpBatchParameterConversions {
           case _: GcsPath => Nil // GCS paths will be localized with a separate localization script.
           case _ =>
             val labels = RunnableBuilder.parameterLabels(directoryInput)
-            val describeRunnables = RunnableBuilder.describeParameter(directoryInput, labels)
+            val describeRunnables = RunnableBuilder.describeParameter(directoryInput, volumes, labels)
             val localizationRunnables = RunnableBuilder.cloudSdkShellRunnable(
               RunnableCommands.localizeDirectory(directoryInput.cloudPath, directoryInput.containerPath)
-            )(labels = labels)
+            )(volumes = volumes, labels = labels)
             List(describeRunnables, localizationRunnables)
         }
       }
@@ -109,9 +109,9 @@ trait GcpBatchParameterConversions {
       val finalDelocalizationRunnables = fileOutput.cloudPath match {
         case _: GcsPath => Nil // GCS files are delocalized with a separate delocalization script.
         case _ =>
-          val describeRunnable = RunnableBuilder.describeParameter(fileOutput, labels)
+          val describeRunnable = RunnableBuilder.describeParameter(fileOutput, volumes, labels)
           val delocalizationRunnable = RunnableBuilder
-            .cloudSdkShellRunnable(copyCommand)(labels = labels)
+            .cloudSdkShellRunnable(copyCommand)(volumes = volumes, labels = labels)
             .withAlwaysRun(true)
 
           List(describeRunnable, delocalizationRunnable)
@@ -129,7 +129,7 @@ trait GcpBatchParameterConversions {
             every(period) {
               copyCommand
             }
-          )(labels = periodicLabels).withRunInBackground(true)
+          )(volumes = volumes, labels = periodicLabels).withRunInBackground(true)
 
           finalDelocalizationRunnables :+ periodic
 
@@ -146,10 +146,10 @@ trait GcpBatchParameterConversions {
           case _: GcsPath => Nil // GCS paths will be delocalized with a separate delocalization script.
           case _ =>
             val labels = RunnableBuilder.parameterLabels(directoryOutput)
-            val describeRunnable = RunnableBuilder.describeParameter(directoryOutput, labels)
+            val describeRunnable = RunnableBuilder.describeParameter(directoryOutput, volumes, labels)
             val delocalizationRunnable = RunnableBuilder.cloudSdkShellRunnable(
               delocalizeDirectory(directoryOutput.containerPath, directoryOutput.cloudPath, None)
-            )(labels = labels)
+            )(volumes = volumes, labels = labels)
               .withAlwaysRun(true)
 
             List(describeRunnable, delocalizationRunnable)

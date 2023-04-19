@@ -72,9 +72,9 @@ trait Delocalization {
         |fi""".stripMargin
   }
 
-  private def delocalizeRuntimeOutputsRunnable(cloudCallRoot: Path, inputFile: String, workflowRoot: Path)(implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
+  private def delocalizeRuntimeOutputsRunnable(cloudCallRoot: Path, inputFile: String, workflowRoot: Path, volumes: List[Volume])(implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
     val command = multiLineCommand(delocalizeRuntimeOutputsScript(inputFile, workflowRoot, cloudCallRoot))
-    RunnableBuilder.cloudSdkShellRunnable(command)(labels = Map(Key.Tag -> Value.Delocalization))
+    RunnableBuilder.cloudSdkShellRunnable(command)(volumes = volumes, labels = Map(Key.Tag -> Value.Delocalization))
 //      .withDisableImagePrefetch(true)
   }
 
@@ -93,7 +93,7 @@ trait Delocalization {
     val runtimeExtractionRunnables = createPipelineParameters.womOutputRuntimeExtractor.toList flatMap { extractor =>
       List (
         runtimeOutputExtractorRunnable(callExecutionContainerRoot.pathAsString, temporaryFofnForRuntimeOutputFiles, extractor),
-        delocalizeRuntimeOutputsRunnable(cloudCallRoot, temporaryFofnForRuntimeOutputFiles, createPipelineParameters.cloudWorkflowRoot)
+        delocalizeRuntimeOutputsRunnable(cloudCallRoot, temporaryFofnForRuntimeOutputFiles, createPipelineParameters.cloudWorkflowRoot, volumes)
       )
     }
 
@@ -101,7 +101,7 @@ trait Delocalization {
 
     val delocalizationLabel = Map(Key.Tag -> Value.Delocalization)
     val runGcsDelocalizationScript = cloudSdkShellRunnable(
-      s"/bin/bash $gcsDelocalizationContainerPath")(labels = delocalizationLabel)
+      s"/bin/bash $gcsDelocalizationContainerPath")(volumes = volumes, labels = delocalizationLabel)
 
     val annotatedRunnables: List[Runnable.Builder] = runGcsDelocalizationScript ::
       createPipelineParameters.outputParameters.flatMap(_.toRunnables(volumes)) ++
@@ -110,6 +110,7 @@ trait Delocalization {
     // NOTE: papiv2 delocalizes logs from /google but such logs are not available on batch
     // See: https://cloud.google.com/life-sciences/docs/reference/rpc/google.cloud.lifesciences.v2beta
     val all = RunnableBuilder.annotateTimestampedRunnable("delocalization", Value.Delocalization)(
+      volumes,
       annotatedRunnables
     )
 
