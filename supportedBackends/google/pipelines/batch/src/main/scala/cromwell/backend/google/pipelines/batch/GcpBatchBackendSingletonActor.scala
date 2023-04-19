@@ -47,7 +47,6 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
       val replyTo = sender()
       log.info(s"Submitting job (${request.jobName}) to GCP, workflowId = ${request.workflowId}")
       Future {
-        // TODO: Consider not hardcoding machineType
         requestHandler.submit(requestFactory.submitRequest(request))
       }.onComplete {
         case Failure(exception) =>
