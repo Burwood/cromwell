@@ -1,10 +1,10 @@
 package cromwell.backend.google.pipelines.batch.api
 
 import com.google.cloud.batch.v1.AllocationPolicy.Accelerator
-import com.google.cloud.batch.v1.{GetJobRequest, JobName}
+import com.google.cloud.batch.v1.{DeleteJobRequest, GetJobRequest, JobName}
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.batch.runnable._
-import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest, RunStatus}
+import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest}
 import cromwell.core.WorkflowId
 
 //import com.google.cloud.batch.v1.AllocationPolicy._
@@ -16,7 +16,6 @@ import com.google.cloud.batch.v1.LogsPolicy.Destination
 import com.google.cloud.batch.v1.Volume
 import com.google.protobuf.Duration
 import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
-import org.slf4j.{Logger, LoggerFactory}
 
 import scala.jdk.CollectionConverters._
 
@@ -32,7 +31,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
   override def queryRequest(jobName: JobName): GetJobRequest = GetJobRequest.newBuilder.setName(jobName.toString).build
 
-  val log: Logger = LoggerFactory.getLogger(RunStatus.toString)
+  override def abortRequest(jobName: JobName): DeleteJobRequest = DeleteJobRequest.newBuilder.setName(jobName.toString).build()
 
   // VALUES HERE
   private val durationInSeconds: Long = 3600

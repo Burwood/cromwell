@@ -127,6 +127,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     with StandardAsyncExecutionActor
     with BatchApiRunCreationClient
     with BatchApiFetchJobClient
+    with BatchApiAbortClient
     with AskSupport
     with GcpBatchJobCachingActorHelper
     with GcpBatchReferenceFilesMappingOperations
@@ -143,7 +144,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
   /** The type of the run status returned during each poll. */
   override type StandardAsyncRunState = RunStatus
 
-  override def receive: Receive = runCreationClientReceive orElse pollingActorClientReceive orElse kvClientReceive orElse super.receive
+  override def receive: Receive = runCreationClientReceive orElse pollingActorClientReceive orElse abortActorClientReceive orElse kvClientReceive orElse super.receive
 
   /** Should return true if the status contained in `thiz` is equivalent to `that`, delta any other data that might be carried around
     * in the state type.
@@ -167,6 +168,9 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     case Valid(PreviousRetryReasons(p, _)) => p < maxPreemption
     case _ => false
   }
+
+  override def tryAbort(job: StandardAsyncJob): Unit = abortJob(JobName.parse(job.jobId), backendSingletonActor)
+
   //private var hasDockerCredentials: Boolean = false
 
   //type GcpBatchPendingExecutionHandle = PendingExecutionHandle[StandardAsyncJob, Run, StandardAsyncRunState]

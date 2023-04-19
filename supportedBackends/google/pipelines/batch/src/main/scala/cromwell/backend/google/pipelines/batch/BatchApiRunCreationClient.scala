@@ -36,7 +36,6 @@ trait BatchApiRunCreationClient { this: Actor with ActorLogging =>
       case Some(p) =>
         p.future
       case None =>
-        // TODO: Alex - I believe we can skip the singleton actor and submit the job directly
         log.info(s"Asking singleton actor to submit a job: ${request.jobName}")
         backendSingletonActor ! GcpBatchBackendSingletonActor.Action.SubmitJob(request)
         val newPromise = Promise[StandardAsyncJob]()
