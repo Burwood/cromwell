@@ -24,7 +24,7 @@ import wom.format.MemorySize
 import eu.timepit.refined._
 
 object GpuResource {
-  val DefaultNvidiaDriverVersion = "418.87.00"
+
   final case class GpuType(name: String) {
     override def toString: String = name
   }
@@ -39,7 +39,7 @@ object GpuResource {
   }
 }
 
-final case class GpuResource(gpuType: GpuType, gpuCount: Int Refined Positive, nvidiaDriverVersion: String = GpuResource.DefaultNvidiaDriverVersion)
+final case class GpuResource(gpuType: GpuType, gpuCount: Int Refined Positive)
 
 final case class GcpBatchRuntimeAttributes(
                                       cpu: Int Refined Positive,
@@ -105,8 +105,6 @@ object GcpBatchRuntimeAttributes {
   private def cpuPlatformValidation(runtimeConfig: Option[Config]): OptionalRuntimeAttributesValidation[String] = cpuPlatformValidationInstance
   private def gpuTypeValidation(runtimeConfig: Option[Config]): OptionalRuntimeAttributesValidation[GpuType] = GpuTypeValidation.optional
 
-  val GpuDriverVersionKey = "nvidiaDriverVersion"
-  private def gpuDriverValidation(runtimeConfig: Option[Config]): OptionalRuntimeAttributesValidation[String] = new StringRuntimeAttributesValidation(GpuDriverVersionKey).optional
   private def gpuCountValidation(runtimeConfig: Option[Config]): OptionalRuntimeAttributesValidation[Int Refined Positive] = GpuValidation.optional
   private def gpuMinValidation(runtimeConfig: Option[Config]):OptionalRuntimeAttributesValidation[Int Refined Positive] = GpuValidation.optionalMin
 
@@ -167,7 +165,6 @@ object GcpBatchRuntimeAttributes {
     StandardValidatedRuntimeAttributesBuilder.default(runtimeConfig).withValidation(
       gpuCountValidation(runtimeConfig),
       gpuTypeValidation(runtimeConfig),
-      gpuDriverValidation(runtimeConfig),
       cpuValidation(runtimeConfig),
       cpuPlatformValidation(runtimeConfig),
       cpuMinValidation(runtimeConfig),
@@ -194,17 +191,14 @@ object GcpBatchRuntimeAttributes {
     val checkpointFileName: Option[String] = RuntimeAttributesValidation.extractOption(checkpointFileValidationInstance.key, validatedRuntimeAttributes)
 
     //GPU
-
     lazy val gpuType: Option[GpuType] = RuntimeAttributesValidation
       .extractOption(gpuTypeValidation(runtimeAttrsConfig).key, validatedRuntimeAttributes)
     lazy val gpuCount: Option[Int Refined Positive] = RuntimeAttributesValidation
       .extractOption(gpuCountValidation(runtimeAttrsConfig).key, validatedRuntimeAttributes)
-    lazy val gpuDriver: Option[String] = RuntimeAttributesValidation
-      .extractOption(gpuDriverValidation(runtimeAttrsConfig).key, validatedRuntimeAttributes)
 
-    val gpuResource: Option[GpuResource] = if (gpuType.isDefined || gpuCount.isDefined || gpuDriver.isDefined) {
+    val gpuResource: Option[GpuResource] = if (gpuType.isDefined || gpuCount.isDefined) {
       Option(GpuResource(gpuType.getOrElse(GpuType.DefaultGpuType), gpuCount
-        .getOrElse(GpuType.DefaultGpuCount), gpuDriver.getOrElse(GpuResource.DefaultNvidiaDriverVersion)))
+        .getOrElse(GpuType.DefaultGpuCount)))
     } else {
       None
     }
