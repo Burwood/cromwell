@@ -14,7 +14,7 @@ import wom.runtime.WomOutputRuntimeExtractor
 import scala.concurrent.duration.FiniteDuration
 
 trait GcpBatchRequestFactory {
-  def submitRequest(machineType: String, data: GcpBatchRequest): CreateJobRequest
+  def submitRequest(data: GcpBatchRequest): CreateJobRequest
 
   def queryRequest(jobName: JobName): GetJobRequest
 

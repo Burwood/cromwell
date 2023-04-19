@@ -46,14 +46,14 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
       .build
   }
 
-  private def createInstancePolicy(machineType: String, cpuPlatform: String, spotModel: ProvisioningModel, accelerators: Option[Accelerator.Builder], attachedDisks: List[AttachedDisk]) = {
+  private def createInstancePolicy(cpuPlatform: String, spotModel: ProvisioningModel, accelerators: Option[Accelerator.Builder], attachedDisks: List[AttachedDisk]) = {
 
     //val attachedDiskIterable: Iterable[AttachedDisk] = attachedDisk.asJava
+
     //set GPU count to 0 if not included in workflow
     val gpuAccelerators = accelerators.getOrElse(Accelerator.newBuilder.setCount(0).setType(""))
     val instancePolicy = InstancePolicy
       .newBuilder
-      .setMachineType(machineType)
       .setProvisioningModel(spotModel)
       .addAllDisks(attachedDisks.asJava)
       .setMinCpuPlatform(cpuPlatform)
@@ -123,7 +123,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
       .build
   }
 
-  override def submitRequest(machineType: String, data: GcpBatchRequest): CreateJobRequest = {
+  override def submitRequest(data: GcpBatchRequest): CreateJobRequest = {
     val batchAttributes = data.gcpBatchParameters.batchAttributes
     val runtimeAttributes = data.gcpBatchParameters.runtimeAttributes
     val createParameters = data.createParameters
@@ -160,9 +160,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
     // Set GPU accelerators
     val accelerators = runtimeAttributes.gpuResource.map(toAccelerator)
-
-    // Parse Service Account
-    //val sa = batchAttributes.computeServiceAccount
+    
 
     //val image = gcsTransferLibraryContainerPath
     //val gcsTransferLibraryContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsTransferLibraryName)
@@ -200,7 +198,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val computeResource = createComputeResource(cpuCores, memory, gcpBootDiskSizeMb)
     val taskSpec = createTaskSpec(sortedRunnables, computeResource, retryCount, durationInSeconds, allVolumes)
     val taskGroup: TaskGroup = createTaskGroup(taskCount, taskSpec)
-    val instancePolicy = createInstancePolicy(machineType = machineType, cpuPlatform = cpuPlatform, spotModel, accelerators, allDisks)
+    val instancePolicy = createInstancePolicy(cpuPlatform, spotModel, accelerators, allDisks)
     val locationPolicy = LocationPolicy.newBuilder.addAllowedLocations(zones).build
     val allocationPolicy = createAllocationPolicy(data.workflowId, locationPolicy, instancePolicy.build, networkPolicy, gcpSa)
     val job = Job
