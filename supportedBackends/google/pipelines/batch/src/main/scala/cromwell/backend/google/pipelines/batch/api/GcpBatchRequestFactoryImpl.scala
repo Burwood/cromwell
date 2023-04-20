@@ -33,10 +33,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
   override def abortRequest(jobName: JobName): DeleteJobRequest = DeleteJobRequest.newBuilder.setName(jobName.toString).build()
 
-  // VALUES HERE
-  private val durationInSeconds: Long = 3600
-  private val taskCount: Long = 1
-
   private def createComputeResource(cpu: Long, memory: Long, bootDiskSizeMb: Long) = {
     ComputeResource
       .newBuilder
@@ -124,6 +120,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
   }
 
   override def submitRequest(data: GcpBatchRequest): CreateJobRequest = {
+
     val batchAttributes = data.gcpBatchParameters.batchAttributes
     val runtimeAttributes = data.gcpBatchParameters.runtimeAttributes
     val createParameters = data.createParameters
@@ -151,6 +148,12 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
     val noAddress = runtimeAttributes.noAddress
 
+    // Determine max runtime for Batch
+    val durationInSeconds: Long = data.gcpBatchParameters.batchAttributes.batchTimeout.toSeconds
+
+    // Batch defaults to 1 task
+    val taskCount: Long = 1
+
     println(f"command script container path ${data.createParameters.commandScriptContainerPath}")
     println(f"cloud workflow root ${data.createParameters.cloudWorkflowRoot}")
     println(f"all parameters:\n ${data.createParameters.allParameters.mkString("\n")}")
@@ -161,7 +164,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     // Set GPU accelerators
     val accelerators = runtimeAttributes.gpuResource.map(toAccelerator)
     
-
     //val image = gcsTransferLibraryContainerPath
     //val gcsTransferLibraryContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsTransferLibraryName)
 

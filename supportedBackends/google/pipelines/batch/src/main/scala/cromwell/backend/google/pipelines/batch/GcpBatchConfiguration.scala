@@ -12,14 +12,13 @@ import spray.json._
 
 
 class GcpBatchConfiguration(val configurationDescriptor: BackendConfigurationDescriptor,
-                            //val batchFactory: GcpBatchFactoryInterface,
                             val googleConfig: GoogleConfiguration,
                             val batchAttributes: GcpBatchConfigurationAttributes
                            ) extends DefaultJsonProtocol {
 
   val batchAuths: GcpBatchAuths = batchAttributes.auths
   val root: String = configurationDescriptor.backendConfig.getString("root")
-  val pipelineTimeout: FiniteDuration = batchAttributes.pipelineTimeout
+  val batchTimeout: FiniteDuration = batchAttributes.batchTimeout
   val runtimeConfig: Option[Config] = configurationDescriptor.backendRuntimeAttributesConfig
 
 

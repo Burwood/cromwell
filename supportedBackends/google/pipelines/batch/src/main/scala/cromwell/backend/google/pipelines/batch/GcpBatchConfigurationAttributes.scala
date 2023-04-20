@@ -43,7 +43,7 @@ case class GcpBatchConfigurationAttributes(project: String,
                                            qps: Int Refined Positive,
                                            cacheHitDuplicationStrategy: PipelinesCacheHitDuplicationStrategy,
                                            requestWorkers: Int Refined Positive,
-                                           pipelineTimeout: FiniteDuration,
+                                           batchTimeout: FiniteDuration,
                                            logFlushPeriod: Option[FiniteDuration],
                                            gcsTransferConfiguration: GcsTransferConfiguration,
                                            virtualPrivateCloudConfiguration: VirtualPrivateCloudConfiguration,
@@ -99,7 +99,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
     "filesystems.gcs.caching.duplication-strategy",
     "concurrent-job-limit",
     "request-workers",
-    "pipeline-timeout",
+    "batch-timeout",
     "batch-requests.timeouts.read",
     "batch-requests.timeouts.connect",
     "default-runtime-attributes.bootDiskSizeGb",
@@ -213,7 +213,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
     }
     val requestWorkers: ErrorOr[Int Refined Positive] = validatePositiveInt(backendConfig.as[Option[Int]]("request-workers").getOrElse(3), "request-workers")
 
-    val pipelineTimeout: FiniteDuration = backendConfig.getOrElse("pipeline-timeout", 7.days)
+    val batchTimeout: FiniteDuration = backendConfig.getOrElse("batch-timeout", 7.days)
 
     val logFlushPeriod: Option[FiniteDuration] = backendConfig.as[Option[FiniteDuration]]("log-flush-period") match {
       case Some(duration) if duration.isFinite => Option(duration)
@@ -302,7 +302,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
             qps = qps,
             cacheHitDuplicationStrategy = cacheHitDuplicationStrategy,
             requestWorkers = requestWorkers,
-            pipelineTimeout = pipelineTimeout,
+            batchTimeout = batchTimeout,
             logFlushPeriod = logFlushPeriod,
             gcsTransferConfiguration = gcsTransferConfiguration,
             virtualPrivateCloudConfiguration = virtualPrivateCloudConfiguration,
