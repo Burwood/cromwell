@@ -3,7 +3,7 @@ package cromwell.backend.google.pipelines.batch
 import com.typesafe.config.Config
 import cromwell.backend.BackendConfigurationDescriptor
 import cromwell.backend.google.pipelines.batch.authentication.GcpBatchAuths
-import cromwell.backend.google.pipelines.common.authentication.PipelinesApiDockerCredentials
+import cromwell.backend.google.pipelines.batch.authentication.GcpBatchDockerCredentials
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import scala.concurrent.duration.FiniteDuration
 import cromwell.core.BackendDockerConfiguration
@@ -22,9 +22,9 @@ class GcpBatchConfiguration(val configurationDescriptor: BackendConfigurationDes
   val runtimeConfig: Option[Config] = configurationDescriptor.backendRuntimeAttributesConfig
 
 
-  val dockerCredentials: Option[PipelinesApiDockerCredentials] = {
+  val dockerCredentials: Option[GcpBatchDockerCredentials] = {
     BackendDockerConfiguration.build(configurationDescriptor.backendConfig).dockerCredentials map { creds =>
-      PipelinesApiDockerCredentials.apply(creds, googleConfig)
+      GcpBatchDockerCredentials.apply(creds, googleConfig)
    }
   }
 

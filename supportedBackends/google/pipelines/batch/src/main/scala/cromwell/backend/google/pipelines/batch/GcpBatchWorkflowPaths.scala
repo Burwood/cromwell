@@ -4,7 +4,7 @@ import com.google.api.gax.retrying.RetrySettings
 import com.google.auth.Credentials
 import com.typesafe.config.Config
 import cromwell.backend.google.pipelines.batch.GcpBatchWorkflowPaths.callCachePathPrefixFromExecutionRoot
-import cromwell.backend.google.pipelines.common.WorkflowOptionKeys
+import cromwell.backend.google.pipelines.batch.runnable.WorkflowOptionKeys
 import cromwell.backend.io.WorkflowPaths
 import cromwell.cloudsupport.gcp.gcs.GcsStorage
 import cromwell.filesystems.gcs.GcsPathBuilder

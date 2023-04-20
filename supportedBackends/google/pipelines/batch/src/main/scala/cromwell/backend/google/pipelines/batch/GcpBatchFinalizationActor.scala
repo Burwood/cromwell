@@ -7,6 +7,7 @@ import cromwell.core.CallOutputs
 import cromwell.core.io.AsyncIoActorClient
 import cromwell.filesystems.gcs.batch.GcsBatchCommandBuilder
 import wom.graph.CommandCallNode
+
 case class GcpBatchFinalizationActorParams
 (
   workflowDescriptor: BackendWorkflowDescriptor,

@@ -1,7 +1,5 @@
 package cromwell.backend.google.pipelines.batch
 
-
-import cromwell.backend.google.pipelines.common.PipelinesApiExpressionFunctions
 import cromwell.backend.standard.{StandardInitializationData, StandardValidatedRuntimeAttributesBuilder}
 
 case class GcpBackendInitializationData(
@@ -12,4 +10,4 @@ case class GcpBackendInitializationData(
                                          privateDockerEncryptionKeyName: Option[String],
                                          privateDockerEncryptedToken: Option[String],
 
-                                       ) extends StandardInitializationData(workflowPaths, runtimeAttributesBuilder, classOf[PipelinesApiExpressionFunctions] )
+                                       ) extends StandardInitializationData(workflowPaths, runtimeAttributesBuilder, classOf[BatchExpressionFunctions] )
