@@ -2,7 +2,6 @@ package cromwell.backend.google.pipelines.batch
 
 import cats.data.Validated._
 
-import java.net.URL
 import cats.data.{NonEmptyList, Validated}
 import cats.implicits._
 import com.typesafe.config.{Config, ConfigValue}
@@ -37,7 +36,6 @@ case class GcpBatchConfigurationAttributes(project: String,
                                            restrictMetadataAccess: Boolean,
                                            enableFuse: Boolean,
                                            executionBucket: String,
-                                           endpointUrl: URL,
                                            location: String,
                                            maxPollingInterval: Int,
                                            qps: Int Refined Positive,
@@ -88,7 +86,6 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
     "genomics.auth",
     "genomics.restrict-metadata-access",
     "genomics.enable-fuse",
-    "genomics.endpoint-url",
     "genomics-api-queries-per-100-seconds",
     "genomics.localization-attempts",
     "genomics.parallel-composite-upload-threshold",
@@ -185,10 +182,9 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
     val executionBucket: ErrorOr[String] = validate {
       backendConfig.as[String]("root")
     }
-    val endpointUrl: ErrorOr[URL] = validate {
-      backendConfig.as[URL]("genomics.endpoint-url")
+    val location: ErrorOr[String] = validate {
+      backendConfig.as[String]("genomics.location")
     }
-    val location: ErrorOr[String] = validateGenomicsLocation(endpointUrl, backendConfig.as[Option[String]]("genomics.location"))
     val maxPollingInterval: Int = backendConfig.as[Option[Int]]("maximum-polling-interval").getOrElse(600)
     val computeServiceAccount: String = backendConfig.as[Option[String]]("genomics.compute-service-account").getOrElse("default")
     val genomicsAuthName: ErrorOr[String] = validate {
@@ -267,7 +263,6 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
 
     def authGoogleConfigForBatchConfigurationAttributes(project: String,
                                                         bucket: String,
-                                                        endpointUrl: URL,
                                                         genomicsName: String,
                                                         location: String,
                                                         restrictMetadata: Boolean,
@@ -296,7 +291,6 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
             restrictMetadataAccess = restrictMetadata,
             enableFuse = enableFuse,
             executionBucket = bucket,
-            endpointUrl = endpointUrl,
             location = location,
             maxPollingInterval = maxPollingInterval,
             qps = qps,
@@ -316,7 +310,6 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
 
     (project,
       executionBucket,
-      endpointUrl,
       genomicsAuthName,
       location,
       genomicsRestrictMetadataAccess,
@@ -396,17 +389,6 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
     refineV[Positive](qpsCandidate) match {
       case Left(_) => s"Calculated QPS for Google Genomics API ($qpsCandidate/s) was not a positive integer (supplied value was $qp100s per 100s)".invalidNel
       case Right(refined) => refined.validNel
-    }
-  }
-
-  def validateGenomicsLocation(genomicsUrl: ErrorOr[URL], location: Option[String]): ErrorOr[String] = {
-    genomicsUrl match {
-      case Valid(url) if url.toString.contains("lifesciences") =>
-        location match {
-          case Some(location) => location.validNel
-          case None => "Missing mandatory attribute `genomics.location` for Google Cloud Life Sciences API".invalidNel
-        }
-      case _ => location.getOrElse("").validNel
     }
   }
 
