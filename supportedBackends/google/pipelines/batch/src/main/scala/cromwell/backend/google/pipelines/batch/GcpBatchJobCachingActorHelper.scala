@@ -3,8 +3,6 @@ package cromwell.backend.google.pipelines.batch
 import cromwell.backend.google.pipelines.batch.io.{GcpBatchAttachedDisk, GcpBatchWorkingDisk}
 import cromwell.backend.standard.StandardCachingActorHelper
 import cromwell.core.labels.Labels
-//import cromwell.backend.google.pipelines.common.WorkflowOptionKeys
-//import cromwell.backend.google.pipelines.common.PipelinesApiMetadataKeys
 import cromwell.core.logging.JobLogging
 import cromwell.core.path.Path
 

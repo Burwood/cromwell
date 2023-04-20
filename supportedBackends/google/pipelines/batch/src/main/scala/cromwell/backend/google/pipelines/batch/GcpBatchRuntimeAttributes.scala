@@ -7,9 +7,6 @@ import cromwell.backend.google.pipelines.batch.io.{GcpBatchAttachedDisk, GcpBatc
 import wdl4s.parser.MemoryUnit
 import wom.types.{WomArrayType, WomStringType, WomType}
 import wom.values.{WomArray, WomValue}
-import cromwell.backend.google.pipelines.common.ZonesValidation
-//import cromwell.backend.google.pipelines.batch.GpuValidation
-//import cromwell.backend.google.pipelines.batch.GpuTypeValidation
 import cromwell.backend.validation.BooleanRuntimeAttributesValidation
 import cromwell.backend.google.pipelines.batch.GpuResource.GpuType
 import wom.values.{WomBoolean, WomInteger, WomString}
@@ -247,6 +244,21 @@ object GcpBatchRuntimeAttributes {
   }
 
 
+}
+
+object ZonesValidation extends RuntimeAttributesValidation[Vector[String]] {
+  override def key: String = GcpBatchRuntimeAttributes.ZonesKey
+
+  override def coercion: Iterable[WomType] = Set(WomStringType, WomArrayType(WomStringType))
+
+  override protected def validateValue: PartialFunction[WomValue, ErrorOr[Vector[String]]] = {
+    case WomString(s) => s.split("\\s+").toVector.validNel
+    case WomArray(womType, value) if womType.memberType == WomStringType =>
+      value.map(_.valueString).toVector.validNel
+  }
+
+  override protected def missingValueMessage: String =
+    s"Expecting $key runtime attribute to be either a whitespace separated String or an Array[String]"
 }
 
 object DisksValidation extends RuntimeAttributesValidation[Seq[GcpBatchAttachedDisk]] {

@@ -12,7 +12,7 @@ import common.validation.Validation._
 import cromwell.backend.CommonBackendConfigurationAttributes
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.{BatchRequestTimeoutConfiguration, GcsTransferConfiguration, VirtualPrivateCloudConfiguration}
 import cromwell.backend.google.pipelines.batch.authentication.GcpBatchAuths
-import cromwell.backend.google.pipelines.common.callcaching.{CopyCachedOutputs, PipelinesCacheHitDuplicationStrategy, UseOriginalCachedOutputs}
+import cromwell.backend.google.pipelines.batch.callcaching.{CopyCachedOutputs, BatchCacheHitDuplicationStrategy, UseOriginalCachedOutputs}
 import cromwell.backend.google.pipelines.batch.io.GcpBatchReferenceFilesDisk
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.cloudsupport.gcp.auth.GoogleAuthMode
@@ -39,7 +39,7 @@ case class GcpBatchConfigurationAttributes(project: String,
                                            location: String,
                                            maxPollingInterval: Int,
                                            qps: Int Refined Positive,
-                                           cacheHitDuplicationStrategy: PipelinesCacheHitDuplicationStrategy,
+                                           cacheHitDuplicationStrategy: BatchCacheHitDuplicationStrategy,
                                            requestWorkers: Int Refined Positive,
                                            batchTimeout: FiniteDuration,
                                            logFlushPeriod: Option[FiniteDuration],
@@ -269,7 +269,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
                                                         enableFuse: Boolean,
                                                         gcsName: String,
                                                         qps: Int Refined Positive,
-                                                        cacheHitDuplicationStrategy: PipelinesCacheHitDuplicationStrategy,
+                                                        cacheHitDuplicationStrategy: BatchCacheHitDuplicationStrategy,
                                                         requestWorkers: Int Refined Positive,
                                                         gcsTransferConfiguration: GcsTransferConfiguration,
                                                         virtualPrivateCloudConfiguration: VirtualPrivateCloudConfiguration,

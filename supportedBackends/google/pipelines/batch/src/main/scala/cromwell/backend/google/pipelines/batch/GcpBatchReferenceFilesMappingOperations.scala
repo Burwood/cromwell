@@ -7,7 +7,7 @@ import com.google.cloud.storage.Storage.{BlobField, BlobGetOption}
 import com.google.cloud.storage.{BlobId, Storage, StorageOptions}
 import com.google.common.io.BaseEncoding
 import com.google.common.primitives.Longs
-import cromwell.backend.google.pipelines.common.errors.InvalidGcsPathsInManifestFileException
+import cromwell.backend.google.pipelines.batch.errors.InvalidGcsPathsInManifestFileException
 import cromwell.backend.google.pipelines.batch.io.GcpBatchReferenceFilesDisk
 import cromwell.cloudsupport.gcp.auth.GoogleAuthMode
 import cromwell.filesystems.gcs.GcsPathBuilder.{InvalidFullGcsPath, ValidFullGcsPath}

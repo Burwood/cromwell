@@ -4,12 +4,9 @@ import akka.http.scaladsl.model.{ContentType, ContentTypes}
 import com.google.cloud.batch.v1.JobName
 import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
 import wom.callable.RuntimeEnvironment
-//import cats.syntax.validated._
 import cats.implicits._
 import com.google.cloud.storage.contrib.nio.CloudStorageOptions
 import common.util.StringUtil._
-//import common.validation.ErrorOr._
-//import common.validation.Validation._
 import cats.data.Validated.Valid
 import cromwell.backend._
 import cromwell.backend.google.pipelines.batch.GcpBatchJobPaths.GcsTransferLibraryName
@@ -17,10 +14,8 @@ import cromwell.backend.google.pipelines.batch.io._
 import cromwell.backend.standard.{StandardAsyncExecutionActor, StandardAsyncExecutionActorParams, StandardAsyncJob}
 import cromwell.core._
 import cromwell.core.retry.SimpleExponentialBackoff
-//import common.validation.Validation._
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory._
 import cromwell.backend.google.pipelines.common.monitoring.CheckpointingConfiguration
-//import cromwell.backend.google.pipelines.common.monitoring.{CheckpointingConfiguration, MonitoringImage}
 import akka.actor.ActorRef
 import akka.pattern.AskSupport
 import cats.data.NonEmptyList
@@ -28,7 +23,7 @@ import common.validation.ErrorOr.ErrorOr
 import cromwell.backend.async.{ExecutionHandle, PendingExecutionHandle}
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.batch.RunStatus.TerminalRunStatus
-import cromwell.backend.google.pipelines.common.WorkflowOptionKeys
+import cromwell.backend.google.pipelines.batch.runnable.WorkflowOptionKeys
 import cromwell.core.io.IoCommandBuilder
 import cromwell.core.path.DefaultPathBuilder
 import cromwell.core.{ExecutionEvent, WorkflowId}
@@ -36,13 +31,10 @@ import cromwell.filesystems.drs.{DrsPath, DrsResolver}
 import cromwell.filesystems.gcs.batch.GcsBatchCommandBuilder
 import cromwell.services.instrumentation.CromwellInstrumentation
 import wom.values.WomFile
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
-//import wom.types.{WomArrayType, WomSingleFileType}
 import wom.core.FullyQualifiedName
 import wom.values._
-//import cromwell.backend.io.DirectoryFunctions
 import cromwell.core.path.Path
 import cromwell.filesystems.gcs.GcsPath
 import cromwell.filesystems.http.HttpPath
@@ -56,15 +48,12 @@ import wom.callable.Callable.OutputDefinition
 import wom.callable.MetaValueElement.{MetaValueElementBoolean, MetaValueElementObject}
 import wom.expression.{FileEvaluation, NoIoFunctionSet}
 import wom.format.MemorySize
-
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
-//import java.io.OutputStreamWriter
 import cromwell.filesystems.gcs.GcsPathBuilder
 import cromwell.filesystems.gcs.GcsPathBuilder.ValidFullGcsPath
-
 import java.io.{FileNotFoundException, OutputStreamWriter}
 import java.nio.charset.Charset
 

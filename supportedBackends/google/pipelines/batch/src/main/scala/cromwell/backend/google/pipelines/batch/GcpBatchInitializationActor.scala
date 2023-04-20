@@ -18,7 +18,6 @@ import wom.graph.CommandCallNode
 import com.google.api.services.storage.StorageScopes
 import cromwell.filesystems.gcs.GoogleUtil._
 import com.google.api.services.genomics.v2alpha1.GenomicsScopes
-
 import cromwell.cloudsupport.gcp.auth.GoogleAuthMode.{httpTransport, jsonFactory}
 import cromwell.cloudsupport.gcp.auth.{GoogleAuthMode, UserServiceAccountMode}
 import org.apache.commons.codec.binary.Base64
