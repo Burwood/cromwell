@@ -12,6 +12,7 @@ repository.
 
  - [AWS](AWS.conf): Amazon Web Services ([documentation](https://cromwell.readthedocs.io/en/stable/tutorials/AwsBatch101/))
  - [TES](TES.conf) is a backend that submits jobs to a server with protocol defined by GA4GH ([documentation](https://cromwell.readthedocs.io/en/stable/backends/TES/))
+ - [BATCH](GcpBatch.conf): Google Cloud Batch backend ([documentation](https://cromwell.readthedocs.io/en/stable/backends/Google/))
  - [PAPIv2](PAPIv2.conf): Google Pipelines API backend (version 2!) ([documentation](https://cromwell.readthedocs.io/en/stable/backends/Google/))
 
 ### Containers
