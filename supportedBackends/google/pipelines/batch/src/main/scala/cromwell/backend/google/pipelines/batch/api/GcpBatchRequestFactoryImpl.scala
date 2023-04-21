@@ -207,7 +207,7 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
       .setAllocationPolicy(allocationPolicy)
       .putLabels("submitter", "cromwell") // label to signify job submitted by cromwell for larger tracking purposes within GCP batch
       .putLabels("cromwell-workflow-id", toLabel(data.workflowId.toString)) // label to make it easier to match Cromwell workflows with multiple GCP batch jobs
-      .putLabels("cromwell-workflow-id", toLabel(data.gcpBatchParameters.jobDescriptor.taskCall.callable.name)) //label for task from WDL
+      .putLabels("cromwell-task", toLabel(data.gcpBatchParameters.jobDescriptor.taskCall.callable.name)) //label for task from WDL
       .setLogsPolicy(LogsPolicy
         .newBuilder
         .setDestination(Destination.CLOUD_LOGGING)
