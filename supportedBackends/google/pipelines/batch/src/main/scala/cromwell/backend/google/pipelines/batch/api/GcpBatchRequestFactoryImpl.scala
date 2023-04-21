@@ -5,12 +5,9 @@ import com.google.cloud.batch.v1.{DeleteJobRequest, GetJobRequest, JobName}
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.batch.runnable._
 import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest}
-import cromwell.core.WorkflowId
-
 //import com.google.cloud.batch.v1.AllocationPolicy._
 import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy, ProvisioningModel}
 import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec}
-//import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy}
 import com.google.cloud.batch.v1.AllocationPolicy.AttachedDisk
 import com.google.cloud.batch.v1.LogsPolicy.Destination
 import com.google.cloud.batch.v1.Volume
@@ -105,12 +102,13 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
   }
 
-  private def createAllocationPolicy(workflowId: WorkflowId, locationPolicy: LocationPolicy, instancePolicy: InstancePolicy, networkPolicy: NetworkPolicy, serviceAccount: ServiceAccount) = {
+  private def createAllocationPolicy(data: GcpBatchRequest, locationPolicy: LocationPolicy, instancePolicy: InstancePolicy, networkPolicy: NetworkPolicy, serviceAccount: ServiceAccount) = {
     AllocationPolicy
       .newBuilder
       .setLocation(locationPolicy)
       .setNetwork(networkPolicy)
-      .putLabels("cromwell-workflow-id", workflowId.toString)
+      .putLabels("cromwell-workflow-id", toLabel(data.workflowId.toString)) //label for workflow from WDL
+      .putLabels("cromwell-task", toLabel(data.gcpBatchParameters.jobDescriptor.taskCall.callable.name)) //label for task from WDL
       .setServiceAccount(serviceAccount)
       .addInstances(InstancePolicyOrTemplate
         .newBuilder
@@ -202,13 +200,14 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val taskGroup: TaskGroup = createTaskGroup(taskCount, taskSpec)
     val instancePolicy = createInstancePolicy(cpuPlatform, spotModel, accelerators, allDisks)
     val locationPolicy = LocationPolicy.newBuilder.addAllowedLocations(zones).build
-    val allocationPolicy = createAllocationPolicy(data.workflowId, locationPolicy, instancePolicy.build, networkPolicy, gcpSa)
+    val allocationPolicy = createAllocationPolicy(data, locationPolicy, instancePolicy.build, networkPolicy, gcpSa)
     val job = Job
       .newBuilder
       .addTaskGroups(taskGroup)
       .setAllocationPolicy(allocationPolicy)
       .putLabels("submitter", "cromwell") // label to signify job submitted by cromwell for larger tracking purposes within GCP batch
-      .putLabels("cromwell-workflow-id", data.workflowId.toString) // label to make it easier to match Cromwell workflows with multiple GCP batch jobs
+      .putLabels("cromwell-workflow-id", toLabel(data.workflowId.toString)) // label to make it easier to match Cromwell workflows with multiple GCP batch jobs
+      .putLabels("cromwell-workflow-id", toLabel(data.gcpBatchParameters.jobDescriptor.taskCall.callable.name)) //label for task from WDL
       .setLogsPolicy(LogsPolicy
         .newBuilder
         .setDestination(Destination.CLOUD_LOGGING)

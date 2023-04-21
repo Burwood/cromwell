@@ -13,6 +13,11 @@ trait BatchUtilityConversions {
     "zones/" + zones.mkString(",")
   }
 
+  // lowercase text to match gcp label requirements
+  def toLabel(text: String): String = {
+    text.toLowerCase
+  }
+
   // creates batch run time location from zones entered in runtime.  This is needed if network not defined by user to place on right network.
   def toBatchRunLocation(zones: Vector[String]): String = {
     val parts = zones.mkString(",").split("-")
@@ -104,7 +109,6 @@ trait BatchUtilityConversions {
   def convertGbToMib(runtimeAttributes: GcpBatchRuntimeAttributes): Long = {
     (runtimeAttributes.bootDiskSize * 953.7).toLong
   }
-
 
   // Create accelerators for GPUs
   def toAccelerator(gpuResource: GpuResource): Accelerator.Builder = Accelerator.newBuilder.setCount(gpuResource.gpuCount.value.toLong).setType(gpuResource.gpuType.toString)
