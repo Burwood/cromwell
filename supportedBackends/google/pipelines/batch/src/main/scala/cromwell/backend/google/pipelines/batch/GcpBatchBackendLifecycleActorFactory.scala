@@ -61,7 +61,7 @@ class GcpBatchBackendLifecycleActorFactory(override val name: String, override v
   override def backendSingletonActorProps(serviceRegistryActor: ActorRef): Option[Props] = {
     val requestHandler = new GcpBatchApiRequestHandler
     val requestFactory = new GcpBatchRequestFactoryImpl()(batchConfiguration.batchAttributes.gcsTransferConfiguration)
-    Option(GcpBatchBackendSingletonActor.props(requestFactory)(requestHandler))
+    Option(GcpBatchBackendSingletonActor.props(requestFactory, serviceRegistryActor = serviceRegistryActor)(requestHandler))
   }
 }
 

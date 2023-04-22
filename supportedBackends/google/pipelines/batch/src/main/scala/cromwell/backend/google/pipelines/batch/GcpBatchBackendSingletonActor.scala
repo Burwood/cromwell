@@ -1,18 +1,20 @@
 package cromwell.backend.google.pipelines.batch
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import com.google.cloud.batch.v1.JobName
 import com.google.longrunning.Operation
 import cromwell.backend.BackendSingletonActorAbortWorkflow
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory
+import cromwell.backend.google.pipelines.batch.monitoring.BatchInstrumentation
 import cromwell.core.Dispatcher.BackendDispatcher
+import cromwell.services.instrumentation.CromwellInstrumentationScheduler
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object GcpBatchBackendSingletonActor {
-  def props(requestFactory: GcpBatchRequestFactory)(implicit requestHandler: GcpBatchApiRequestHandler): Props = {
-    Props(new GcpBatchBackendSingletonActor(requestFactory))
+  def props(requestFactory: GcpBatchRequestFactory, serviceRegistryActor: ActorRef)(implicit requestHandler: GcpBatchApiRequestHandler): Props = {
+    Props(new GcpBatchBackendSingletonActor(requestFactory, serviceRegistryActor = serviceRegistryActor))
       .withDispatcher(BackendDispatcher)
   }
 
@@ -35,14 +37,23 @@ object GcpBatchBackendSingletonActor {
 
 }
 
-// TODO: Alex - serviceRegistryActor required to do instrumentation
-final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory)(implicit requestHandler: GcpBatchApiRequestHandler) extends Actor with ActorLogging {
+final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory, override val serviceRegistryActor: ActorRef)(implicit requestHandler: GcpBatchApiRequestHandler)
+  extends Actor
+    with ActorLogging
+    with BatchInstrumentation
+    with CromwellInstrumentationScheduler
+    with Timers {
 
   import GcpBatchBackendSingletonActor._
 
-  implicit val ec: ExecutionContext = context.dispatcher
+  private implicit val ec: ExecutionContext = context.dispatcher
 
-  override def receive: Receive = {
+  override def preStart() = {
+    startInstrumentationTimer()
+    super.preStart()
+  }
+
+  private def normalReceive: Receive = {
     case Action.SubmitJob(request) =>
       val replyTo = sender()
       log.info(s"Submitting job (${request.jobName}) to GCP, workflowId = ${request.workflowId}")
@@ -95,5 +106,16 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
       // us to be cautious because batch deletes jobs instead of canceling them, hence, we should not delete jobs
       // that are on a final state.
       log.info(s"Cromwell requested to abort workflow $workflowId")
+
+    case other => log.error(s"Unexpected message from {} to ${this.getClass.getSimpleName}: {}", sender().path.name, other)
+  }
+
+  override def receive = instrumentationReceive(loadMetricHandler _).orElse(normalReceive)
+
+  private def loadMetricHandler() = {
+    // TODO: Implement this once we have details to expose
+//    val load = if (workQueue.size > LoadConfig.PAPIThreshold) HighLoad else NormalLoad
+//    serviceRegistryActor ! LoadMetric("PAPIQueryManager", load)
+//    updateQueueSize(workQueue.size)
   }
 }
