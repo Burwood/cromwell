@@ -14,7 +14,8 @@ trait ContainerSetup {
     val containerRootSetup = RunnableBuilder
       .cloudSdkShellRunnable(s"mkdir -p $containerRoot && chmod -R a+rwx $containerRoot")(
         volumes = volumes,
-        labels = Map(Key.Tag -> Value.ContainerSetup)
+        labels = Map(Key.Tag -> Value.ContainerSetup),
+        flags = List.empty
       )
 
     RunnableBuilder

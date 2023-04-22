@@ -74,7 +74,7 @@ trait Delocalization {
 
   private def delocalizeRuntimeOutputsRunnable(cloudCallRoot: Path, inputFile: String, workflowRoot: Path, volumes: List[Volume])(implicit gcsTransferConfiguration: GcsTransferConfiguration): Runnable.Builder = {
     val command = multiLineCommand(delocalizeRuntimeOutputsScript(inputFile, workflowRoot, cloudCallRoot))
-    RunnableBuilder.cloudSdkShellRunnable(command)(volumes = volumes, labels = Map(Key.Tag -> Value.Delocalization))
+    RunnableBuilder.cloudSdkShellRunnable(command)(volumes = volumes, labels = Map(Key.Tag -> Value.Delocalization), flags = List.empty)
 //      .withDisableImagePrefetch(true)
   }
 
@@ -101,7 +101,7 @@ trait Delocalization {
 
     val delocalizationLabel = Map(Key.Tag -> Value.Delocalization)
     val runGcsDelocalizationScript = cloudSdkShellRunnable(
-      s"/bin/bash $gcsDelocalizationContainerPath")(volumes = volumes, labels = delocalizationLabel)
+      s"/bin/bash $gcsDelocalizationContainerPath")(volumes = volumes, labels = delocalizationLabel, flags = List.empty)
 
     val annotatedRunnables: List[Runnable.Builder] = runGcsDelocalizationScript ::
       createPipelineParameters.outputParameters.flatMap(_.toRunnables(volumes)) ++

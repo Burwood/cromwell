@@ -15,7 +15,7 @@ trait CheckpointingRunnable {
       // Initial sync from cloud:
       val initialCheckpointSyncRunnable = RunnableBuilder.cloudSdkShellRunnable(
         createParameters.checkpointingConfiguration.localizePreviousCheckpointCommand(checkpointFilename)
-      )(volumes = volumes, labels = Map.empty)
+      )(volumes = volumes, flags = List.empty, labels = Map.empty)
       val describeInitialCheckpointingSyncRunnable = RunnableBuilder.describeDocker("initial checkpointing sync", initialCheckpointSyncRunnable)
 
       // Background upload runnable:
@@ -23,7 +23,7 @@ trait CheckpointingRunnable {
         image = checkpointingImage,
         command = checkpointingCommand,
 //        environment = checkpointingEnvironment,
-//        mounts = mounts
+        volumes = volumes
       )
       val describeBackgroundCheckpointingRunnable = RunnableBuilder.describeDocker("begin checkpointing background runnable", backgroundCheckpointingRunnable)
 
