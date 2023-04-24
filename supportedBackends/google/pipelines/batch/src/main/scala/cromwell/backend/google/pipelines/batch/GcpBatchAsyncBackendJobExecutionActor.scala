@@ -933,18 +933,9 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
   }
 
   override def isTerminal(runStatus: RunStatus): Boolean = {
-    //runStatus.isTerminal
-
     runStatus match {
-      case jobSucceeded: RunStatus.Succeeded =>
-        log.info("isTerminal match Succeeded running with status {}", jobSucceeded)
-        true
-      case jobFailed: RunStatus.Failed =>
-        log.info("isTerminal match Failed with status {}", jobFailed)
-        true
-      case _: TerminalRunStatus =>
-        val tempTermStatus = runStatus.toString
-        log.info(f"isTerminal match TerminalRunStatus running with status $tempTermStatus")
+      case _: RunStatus.TerminalRunStatus =>
+        log.info(s"isTerminal match terminal run status with $runStatus")
         true
       case other =>
         log.info(f"isTerminal match _ running with status $other")
@@ -954,15 +945,15 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
 
   override def isDone(runStatus: RunStatus): Boolean = {
     runStatus match {
-      case _: RunStatus.Succeeded | RunStatus.Succeeded =>
+      case _: RunStatus.Succeeded =>
         log.info("GCP batch job succeeded matched isDone")
         true
-      case _: RunStatus.Failed | RunStatus.Failed =>
-        log.info("GCP Job failed and matched isDone")
+      case _: RunStatus.UnsuccessfulRunStatus =>
+        log.info("GCP batch job unsuccessful matched isDone")
         true
       case _ =>
-        log.info("did not match isDone")
-        false //throw new RuntimeException(s"Cromwell programmer blunder: isSuccess was called on an incomplete RunStatus ($runStatus).")
+        log.info(s"did not match isDone: $runStatus")
+        throw new RuntimeException(s"Cromwell programmer blunder: isDone was called on an incomplete RunStatus ($runStatus).")
     }
   }
 
