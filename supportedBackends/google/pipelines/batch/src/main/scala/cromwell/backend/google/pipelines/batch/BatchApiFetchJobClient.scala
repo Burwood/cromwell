@@ -2,6 +2,7 @@ package cromwell.backend.google.pipelines.batch
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import com.google.cloud.batch.v1.{Job, JobName}
+import cromwell.backend.google.pipelines.batch.monitoring.BatchInstrumentation
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -9,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * Allows fetching a job
   */
-trait BatchApiFetchJobClient { this: Actor with ActorLogging =>
+trait BatchApiFetchJobClient { this: Actor with ActorLogging with BatchInstrumentation =>
 
   private var pollingActorClientPromise: Option[Promise[Job]] = None
 
@@ -17,11 +18,13 @@ trait BatchApiFetchJobClient { this: Actor with ActorLogging =>
   def pollingActorClientReceive: Actor.Receive = {
     case GcpBatchBackendSingletonActor.Event.JobStatusRetrieved(job) =>
       log.info(s"Job retrieved from GCP: ${job.getName}: ${job.getStatus}")
+      pollSuccess()
       completePromise(Success(job))
 
     case GcpBatchBackendSingletonActor.Event.ActionFailed(jobName, cause) =>
       val msg = s"Failed to query job ($jobName) from GCP"
       log.error(cause, msg)
+      pollFailed()
       completePromise(Failure(cause))
   }
 

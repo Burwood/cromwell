@@ -1,6 +1,7 @@
 package cromwell.backend.google.pipelines.batch
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import cromwell.backend.google.pipelines.batch.monitoring.BatchInstrumentation
 import cromwell.backend.standard.StandardAsyncJob
 
 import scala.concurrent.{Future, Promise}
@@ -9,18 +10,20 @@ import scala.util.{Failure, Success, Try}
 /**
   * Handles the flow for submitting a single job to GCP, we can't do anything when that fails
   */
-trait BatchApiRunCreationClient { this: Actor with ActorLogging =>
+trait BatchApiRunCreationClient { this: Actor with ActorLogging with BatchInstrumentation =>
   private var runCreationClientPromise: Option[Promise[StandardAsyncJob]] = None
 
   // handles messages produced from GcpBatchBackendSingletonActor
   def runCreationClientReceive: Actor.Receive = {
     case GcpBatchBackendSingletonActor.Event.JobSubmitted(job) =>
       log.info(s"Job submitted to GCP: ${job.getName}")
+      runSuccess()
       completePromise(Success(StandardAsyncJob(job.getName)))
 
     case GcpBatchBackendSingletonActor.Event.ActionFailed(jobName, cause) =>
       val msg = s"Failed to submit job ($jobName) to GCP"
       log.error(cause, msg)
+      runFailed()
       completePromise(Failure(cause))
   }
 
