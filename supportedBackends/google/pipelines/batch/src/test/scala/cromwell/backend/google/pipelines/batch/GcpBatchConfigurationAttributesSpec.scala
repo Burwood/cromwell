@@ -17,16 +17,15 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 //import java.net.URL
 import scala.concurrent.duration._
 
-// TODO: Need to replace CromwellTimeoutSpec with appropriate class from batch
 class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeoutSpec with Matchers
   with TableDrivenPropertyChecks {
 
-  behavior of "PipelinesApiAttributes"
+  behavior of "GcpBatchAttributes"
 
   val googleConfig: GoogleConfiguration = GoogleConfiguration(BatchGlobalConfig)
   val runtimeConfig: Config = ConfigFactory.load()
 
-  it should "parse correct PAPI config" in {
+  it should "parse correct Batch config" in {
     pending
 
     val backendConfig = ConfigFactory.parseString(configString())
@@ -233,7 +232,6 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     it should s"not parse invalid virtual-private-cloud config $description" in {
       pending
       val backendConfig = ConfigFactory.parseString(configString(customConfig))
-      // TODO: Replace MessageAggregation with appropriate class from batch
       val exception = intercept[IllegalArgumentException with MessageAggregation] {
         GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
       }
@@ -253,9 +251,8 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
           |}
         """.stripMargin)
 
-    // TODO: Replace MessageAggregation with appropriate class from batch
     val exception = intercept[IllegalArgumentException with MessageAggregation] {
-      GcpBatchConfigurationAttributes(googleConfig, nakedConfig, "papi")
+      GcpBatchConfigurationAttributes(googleConfig, nakedConfig, "batch")
     }
     val errorsList = exception.errorMessages.toList
     errorsList should contain("String: 2: No configuration setting found for key 'project'")
@@ -313,7 +310,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     pending
     val backendConfig = ConfigFactory.parseString(configString())
 
-    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "papi")
+    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "batch")
 
     validation shouldBe None.validNel
   }
@@ -324,7 +321,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
 
     val backendConfig = ConfigFactory.parseString(configString(customContent = manifestConfig))
 
-    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "papi")
+    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "batch")
 
     validation shouldBe Option(List.empty).validNel
   }
@@ -361,7 +358,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
       |]
       |""".stripMargin
     val backendConfig = ConfigFactory.parseString(configString(manifestConfig))
-    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "papi")
+    val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "batch")
     val manifests: List[ManifestFile] = validation.toEither.toOption.get.get
 
     manifests shouldBe List(
@@ -430,7 +427,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     badValues foreach { badValue =>
       val customContent = s""""reference-disk-localization-manifests" = $badValue"""
       val backendConfig = ConfigFactory.parseString(configString(customContent))
-      val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "papi")
+      val validation = GcpBatchConfigurationAttributes.validateReferenceDiskManifestConfigs(backendConfig, "batch")
       validation.isInvalid shouldBe true
     }
   }
