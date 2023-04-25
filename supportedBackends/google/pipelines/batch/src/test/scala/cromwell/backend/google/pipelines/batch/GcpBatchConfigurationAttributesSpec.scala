@@ -6,7 +6,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import common.assertion.CromwellTimeoutSpec
 import common.exception.MessageAggregation
 import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.BatchGlobalConfig
-import cromwell.backend.google.pipelines.common.PipelinesApiConfigurationAttributes._
+import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes._
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.cloudsupport.gcp.auth.MockAuthMode
 import cromwell.filesystems.gcs.GcsPathBuilder
@@ -14,9 +14,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-import java.net.URL
+//import java.net.URL
 import scala.concurrent.duration._
 
+// TODO: Need to replace CromwellTimeoutSpec with appropriate class from batch
 class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeoutSpec with Matchers
   with TableDrivenPropertyChecks {
 
@@ -25,13 +26,12 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
   val googleConfig: GoogleConfiguration = GoogleConfiguration(BatchGlobalConfig)
   val runtimeConfig: Config = ConfigFactory.load()
 
-  it should "parse correct PAPI config" in (pending) {
+  it should "parse correct PAPI config" in {
+    pending
 
     val backendConfig = ConfigFactory.parseString(configString())
 
     val gcpBatchAttributes = GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
-    // TODO: Determine if the endpointURL method is necessary
-    gcpBatchAttributes.endpointUrl should be(new URL("http://myEndpoint"))
     gcpBatchAttributes.project should be("myProject")
     gcpBatchAttributes.executionBucket should be("gs://myBucket")
     gcpBatchAttributes.maxPollingInterval should be(600)
@@ -40,11 +40,11 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     gcpBatchAttributes.referenceFileToDiskImageMappingOpt.isEmpty should be(true)
   }
 
-  it should "parse correct preemptible config" in (pending) {
+  it should "parse correct preemptible config" in {
+    pending
     val backendConfig = ConfigFactory.parseString(configString(customContent = "preemptible = 3"))
 
     val gcpBatchAttributes = GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
-    gcpBatchAttributes.endpointUrl should be(new URL("http://myEndpoint"))
     gcpBatchAttributes.project should be("myProject")
     gcpBatchAttributes.executionBucket should be("gs://myBucket")
     gcpBatchAttributes.maxPollingInterval should be(600)
@@ -87,19 +87,20 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     gcpBatchAttributes.batchRequestTimeoutConfiguration should be(BatchRequestTimeoutConfiguration(None, None))
   }
 
-  it should "parse pipeline-timeout" in (pending) {
+  it should "parse pipeline-timeout" in {
+    pending
     val backendConfig = ConfigFactory.parseString(configString(customContent = "pipeline-timeout = 3 days"))
     val gcpBatchAttributes = GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
 
-    // TODO: Determine if pipelineTimeout method is necessary
-    gcpBatchAttributes.pipelineTimeout should be(3.days)
+    gcpBatchAttributes.batchTimeout should be(3.days)
   }
 
-  it should "parse an undefined pipeline-timeout" in (pending) {
+  it should "parse an undefined pipeline-timeout" in {
+    pending
     val backendConfig = ConfigFactory.parseString(configString())
     val gcpBatchAttributes = GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
 
-    gcpBatchAttributes.pipelineTimeout should be(7.days)
+    gcpBatchAttributes.batchTimeout should be(7.days)
   }
 
   it should "parse compute service account" in {
@@ -232,6 +233,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
     it should s"not parse invalid virtual-private-cloud config $description" in {
       pending
       val backendConfig = ConfigFactory.parseString(configString(customConfig))
+      // TODO: Replace MessageAggregation with appropriate class from batch
       val exception = intercept[IllegalArgumentException with MessageAggregation] {
         GcpBatchConfigurationAttributes(googleConfig, backendConfig, "batch")
       }
@@ -251,6 +253,7 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
           |}
         """.stripMargin)
 
+    // TODO: Replace MessageAggregation with appropriate class from batch
     val exception = intercept[IllegalArgumentException with MessageAggregation] {
       GcpBatchConfigurationAttributes(googleConfig, nakedConfig, "papi")
     }
