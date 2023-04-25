@@ -92,7 +92,7 @@ trait BatchUtilityConversions {
   }
 
   def toVpcNetwork(batchAttributes: GcpBatchConfigurationAttributes): String = {
-    batchAttributes.virtualPrivateCloudConfiguration.labelsOption.map { vpcNetworks =>
+    batchAttributes.virtualPrivateCloudConfiguration.literalsOption.map { vpcNetworks =>
       vpcNetworks.network
     }.getOrElse(s"projects/${batchAttributes.project}/global/networks/default")
   }

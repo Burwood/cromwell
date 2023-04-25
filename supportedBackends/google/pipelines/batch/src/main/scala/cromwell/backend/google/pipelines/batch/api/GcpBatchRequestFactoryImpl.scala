@@ -8,12 +8,12 @@ import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatc
 //import com.google.cloud.batch.v1.AllocationPolicy._
 import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy, ProvisioningModel}
 import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec}
+import cromwell.backend.google.pipelines.batch.VpcAndSubnetworkProjectLabelValues
 import com.google.cloud.batch.v1.AllocationPolicy.AttachedDisk
 import com.google.cloud.batch.v1.LogsPolicy.Destination
 import com.google.cloud.batch.v1.Volume
 import com.google.protobuf.Duration
 import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
-
 import scala.jdk.CollectionConverters._
 
 class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransferConfiguration) extends GcpBatchRequestFactory
@@ -29,6 +29,29 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
   override def queryRequest(jobName: JobName): GetJobRequest = GetJobRequest.newBuilder.setName(jobName.toString).build
 
   override def abortRequest(jobName: JobName): DeleteJobRequest = DeleteJobRequest.newBuilder.setName(jobName.toString).build()
+
+
+  def createNetworkWithVPC(vpcAndSubnetworkProjectLabelValues: VpcAndSubnetworkProjectLabelValues, data: GcpBatchRequest): NetworkInterface.Builder = {
+
+    val network = NetworkInterface
+      .newBuilder
+      .setNoExternalIpAddress(data.gcpBatchParameters.runtimeAttributes.noAddress)
+      .setNetwork(vpcAndSubnetworkProjectLabelValues.networkName(data.gcpBatchParameters.projectId))
+
+    vpcAndSubnetworkProjectLabelValues
+      .subnetNameOption(data.gcpBatchParameters.projectId)
+      .foreach(network.setSubnetwork)
+
+    network
+
+  }
+
+  def createNetwork(data: GcpBatchRequest): NetworkInterface.Builder = {
+    data.createParameters.vpcNetworkAndSubnetworkProjectLabels match {
+      case Some(vpcAndSubnetworkProjectLabelValues) => createNetworkWithVPC(vpcAndSubnetworkProjectLabelValues, data)
+      case _ => NetworkInterface.newBuilder().setNoExternalIpAddress(data.createParameters.runtimeAttributes.noAddress)
+    }
+  }
 
   private def createComputeResource(cpu: Long, memory: Long, bootDiskSizeMb: Long) = {
     ComputeResource
@@ -63,15 +86,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
   }
 
-
-  private def createNetworkInterface(vpcNetwork: String, vpcSubnetwork: String, noAddress: Boolean) = {
-    NetworkInterface
-      .newBuilder
-      .setNoExternalIpAddress(noAddress)
-      .setNetwork(vpcNetwork)
-      .setSubnetwork(vpcSubnetwork)
-      .build
-  }
 
   private def createNetworkPolicy(networkInterface: NetworkInterface): NetworkPolicy = {
     NetworkPolicy
@@ -124,8 +138,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     val runtimeAttributes = data.gcpBatchParameters.runtimeAttributes
     val createParameters = data.createParameters
     val retryCount = data.gcpBatchParameters.runtimeAttributes.preemptible
-    val vpcNetwork: String = toVpcNetwork(batchAttributes)
-    val vpcSubnetwork: String = toVpcSubnetwork(batchAttributes, runtimeAttributes)
     val allDisksToBeMounted: Seq[GcpBatchAttachedDisk] = createParameters.adjustedSizeDisks ++ createParameters.referenceDisksForLocalizationOpt.getOrElse(List.empty)
     val gcpBootDiskSizeMb = convertGbToMib(runtimeAttributes)
 
@@ -144,8 +156,6 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
 
     // convert memory to MiB for Batch
     val memory = toMemMib(runtimeAttributes.memory)
-
-    val noAddress = runtimeAttributes.noAddress
 
     // Determine max runtime for Batch
     val durationInSeconds: Long = data.gcpBatchParameters.batchAttributes.batchTimeout.toSeconds
@@ -166,8 +176,8 @@ class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransfe
     //val image = gcsTransferLibraryContainerPath
     //val gcsTransferLibraryContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsTransferLibraryName)
 
-    val networkInterface = createNetworkInterface(vpcNetwork = vpcNetwork, vpcSubnetwork = vpcSubnetwork, noAddress = noAddress)
-    val networkPolicy = createNetworkPolicy(networkInterface)
+    val networkInterface = createNetwork(data = data)
+    val networkPolicy = createNetworkPolicy(networkInterface.build())
     val allDisks = toDisks(allDisksToBeMounted)
     val allVolumes = toVolumes(allDisksToBeMounted)
 

@@ -1,5 +1,6 @@
 package cromwell.backend.google.pipelines.batch
 
+import cromwell.backend.google.pipelines.batch.VpcAndSubnetworkProjectLabelValues
 import cromwell.backend.standard.{StandardInitializationData, StandardValidatedRuntimeAttributesBuilder}
 
 case class GcpBackendInitializationData(
@@ -9,5 +10,6 @@ case class GcpBackendInitializationData(
                                          //gcsCredentials: Credentials,
                                          privateDockerEncryptionKeyName: Option[String],
                                          privateDockerEncryptedToken: Option[String],
+                                         vpcNetworkAndSubnetworkProjectLabels: Option[VpcAndSubnetworkProjectLabelValues]
 
                                        ) extends StandardInitializationData(workflowPaths, runtimeAttributesBuilder, classOf[BatchExpressionFunctions] )
