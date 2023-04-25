@@ -25,20 +25,20 @@ trait Localization {
     val gcsTransferLibraryContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsTransferLibraryName)
     val localizeGcsTransferLibrary = cloudSdkShellRunnable(localizeFile(
       cloudPath = createPipelineParameters.cloudCallRoot / GcsTransferLibraryName,
-      containerPath = gcsTransferLibraryContainerPath))(volumes = volumes, labels = localizationLabel)
+      containerPath = gcsTransferLibraryContainerPath))(volumes = volumes, labels = localizationLabel, flags = List.empty)
 
     val gcsLocalizationContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsLocalizationScriptName)
     val localizeGcsLocalizationScript = cloudSdkShellRunnable(localizeFile(
       cloudPath = createPipelineParameters.cloudCallRoot / GcsLocalizationScriptName,
-      containerPath = gcsLocalizationContainerPath))(volumes = volumes, labels = localizationLabel)
+      containerPath = gcsLocalizationContainerPath))(volumes = volumes, labels = localizationLabel, flags = List.empty)
 
     val gcsDelocalizationContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(GcsDelocalizationScriptName)
     val localizeGcsDelocalizationScript = cloudSdkShellRunnable(localizeFile(
       cloudPath = createPipelineParameters.cloudCallRoot / GcsDelocalizationScriptName,
-      containerPath = gcsDelocalizationContainerPath))(volumes = volumes, labels = localizationLabel)
+      containerPath = gcsDelocalizationContainerPath))(volumes = volumes, labels = localizationLabel, flags = List.empty)
 
     val runGcsLocalizationScript = cloudSdkShellRunnable(
-      s"/bin/bash $gcsLocalizationContainerPath")(volumes = volumes, labels = localizationLabel)
+      s"/bin/bash $gcsLocalizationContainerPath")(volumes = volumes, labels = localizationLabel, flags = List.empty)
 
     val drsInputs: List[DrsPath] = createPipelineParameters.inputOutputParameters.fileInputParameters.collect {
       case GcpBatchFileInput(_, drsPath: DrsPath, _, _) => drsPath
@@ -48,7 +48,7 @@ trait Localization {
       val drsLocalizationManifestContainerPath = createPipelineParameters.commandScriptContainerPath.sibling(DrsLocalizationManifestName)
       val localizeDrsLocalizationManifest = cloudSdkShellRunnable(localizeFile(
         cloudPath = createPipelineParameters.cloudCallRoot / DrsLocalizationManifestName,
-        containerPath = drsLocalizationManifestContainerPath))(volumes = volumes, labels = localizationLabel)
+        containerPath = drsLocalizationManifestContainerPath))(volumes = volumes, labels = localizationLabel, flags = List.empty)
 
       // Requester pays project id is stored on each DrsPath, but will be the same for all DRS inputs to a
       // particular workflow because it's determined by the Google project set in workflow options.

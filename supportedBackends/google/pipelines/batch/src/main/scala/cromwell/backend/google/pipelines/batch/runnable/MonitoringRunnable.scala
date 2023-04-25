@@ -38,6 +38,7 @@ trait MonitoringRunnable {
           val monitoringRunnable = RunnableBuilder.backgroundRunnable(
             monitoringImage,
             monitoringImageCommand,
+            volumes
 //            monitoringImageEnvironment(mounts.map(_.getPath)),
           )
 
