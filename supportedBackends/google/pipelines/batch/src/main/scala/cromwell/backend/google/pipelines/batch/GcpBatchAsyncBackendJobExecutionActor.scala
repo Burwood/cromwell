@@ -32,6 +32,7 @@ import cromwell.filesystems.gcs.{GcsPath, GcsPathBuilder}
 import cromwell.filesystems.http.HttpPath
 import cromwell.filesystems.sra.SraPath
 import cromwell.services.instrumentation.CromwellInstrumentation
+import cromwell.services.metadata.CallMetadataKeys
 import mouse.all._
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.csv.{CSVFormat, CSVPrinter}
@@ -72,7 +73,7 @@ object GcpBatchAsyncBackendJobExecutionActor {
   private val gcsDirectoryPathMatcher = "(?s)^gs://([a-zA-Z0-9][^/]+)(/[^/]+)*/?$".r
 
 
-  val JesOperationIdKey = "__jes_operation_id"
+  val GcpBatchOperationIdKey = "__gcp_batch_operation_id"
 
   type GcpBatchPendingExecutionHandle = PendingExecutionHandle[StandardAsyncJob, Run, RunStatus]
 
@@ -146,7 +147,11 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
                                                  .getOrElse(runtimeAttributes.dockerImage)
 
   override def dockerImageUsed: Option[String] = Option(jobDockerImage)
-  //private var hasDockerCredentials: Boolean = false
+
+  // TODO: why mutable state?
+  //noinspection ActorMutableStateInspection
+  private var hasDockerCredentials: Boolean = false
+  println(hasDockerCredentials)
 
   // Need to add previousRetryReasons and preemptible in order to get preemptible to work in the tests
   protected val previousRetryReasons: ErrorOr[PreviousRetryReasons] = PreviousRetryReasons.tryApply(jobDescriptor.prefetchedKvStoreEntries, jobDescriptor.key.attempt)
@@ -159,10 +164,6 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
 
   override def tryAbort(job: StandardAsyncJob): Unit = abortJob(JobName.parse(job.jobId), backendSingletonActor)
 
-  //private var hasDockerCredentials: Boolean = false
-
-  //type GcpBatchPendingExecutionHandle = PendingExecutionHandle[StandardAsyncJob, Run, StandardAsyncRunState]
-
   val backendSingletonActor: ActorRef = standardParams.backendSingletonActorOption
                                                       .getOrElse(throw new RuntimeException("GCP Batch actor cannot exist without its backend singleton 2"))
 
@@ -171,7 +172,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
   /**
    * Takes two arrays of remote and local WOM File paths and generates the necessary `PipelinesApiInput`s.
    */
-  protected def  gcpBatchInputsFromWomFiles(inputName: String,
+  protected def gcpBatchInputsFromWomFiles(inputName: String,
                                                         remotePathArray: Seq[WomFile],
                                                         localPathArray: Seq[WomFile],
                                                         jobDescriptor: BackendJobDescriptor): Iterable[GcpBatchInput] = {
@@ -403,6 +404,11 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
           .script, _, Seq
           .empty)
     )
+  }
+
+  def sendGoogleLabelsToMetadata(customLabels: Seq[GcpLabel]): Unit = {
+    lazy val backendLabelEvents: Map[String, String] = ((backendLabels ++ customLabels) map { l => s"${CallMetadataKeys.BackendLabels}:${l.key}" -> l.value }).toMap
+    tellMetadata(backendLabelEvents)
   }
 
   protected val useReferenceDisks: Boolean = {
@@ -644,7 +650,6 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     if (referenceName.length <= 127) referenceName else referenceName.md5Sum
   }
 
-  // batch betav2
   // De-localize the glob directory as a GcpBatchDirectoryOutput instead of using * pattern match
   protected def generateGlobFileOutputs(womFile: WomGlobFile): List[GcpBatchOutput] = {
     val globName = GlobFunctions.globName(womFile.value)
@@ -726,7 +731,6 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     case _ => List.empty
   }
 
-  // betav2
   def generateSingleFileOutputs(womFile: WomSingleFile, fileEvaluation: FileEvaluation): List[GcpBatchFileOutput] = {
     val (relpath, disk) = relativePathAndAttachedDisk(womFile.value, runtimeAttributes.disks)
     // If the file is on a custom mount point, resolve it so that the full mount path will show up in the cloud path
@@ -735,8 +739,8 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     // Normalize the local path (to get rid of ".." and "."). Also strip any potential leading / so that it gets appended to the call root
     val normalizedPath = mountedPath.normalize().pathAsString.stripPrefix("/")
     val destination = callRootPath.resolve(normalizedPath)
-    val jesFileOutput = GcpBatchFileOutput(makeSafeReferenceName(womFile.value), destination, relpath, disk, fileEvaluation.optional, fileEvaluation.secondary)
-    List(jesFileOutput)
+    val batchFileOutput = GcpBatchFileOutput(makeSafeReferenceName(womFile.value), destination, relpath, disk, fileEvaluation.optional, fileEvaluation.secondary)
+    List(batchFileOutput)
   }
 
   protected def generateOutputs(jobDescriptor: BackendJobDescriptor): Set[GcpBatchOutput] = {
@@ -789,6 +793,9 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
   // Primary entry point for cromwell to run GCP Batch job
   override def executeAsync(): Future[ExecutionHandle] = {
 
+    // Want to force runtimeAttributes to evaluate so we can fail quickly now if we need to:
+    def evaluateRuntimeAttributes = Future.fromTry(Try(runtimeAttributes))
+
     def generateInputOutputParameters: Future[InputOutputParameters] = Future.fromTry(Try {
       val rcFileOutput = GcpBatchFileOutput(returnCodeFilename, returnCodeGcsPath, DefaultPathBuilder.get(returnCodeFilename), workingDisk, optional = false, secondary = false,
         contentType = plainTextContentType)
@@ -833,10 +840,6 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     })
 
 
-    println(jobDescriptor.fullyQualifiedInputs)
-    val file = jobDescriptor.localInputs
-    println(file.get("test"))
-
     val gcpBatchParameters = CreateGcpBatchParameters(
       jobDescriptor = jobDescriptor,
       runtimeAttributes = runtimeAttributes,
@@ -845,11 +848,11 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
       region = batchAttributes.location)
 
     val runPipelineResponse = for {
-      //_ <- evaluateRuntimeAttributes
+      _ <- evaluateRuntimeAttributes
       _ <- uploadScriptFile()
       customLabels <- Future.fromTry(GcpLabels.fromWorkflowOptions(workflowDescriptor.workflowOptions))
-      jesParameters <- generateInputOutputParameters
-      createParameters = createPipelineParameters(jesParameters, customLabels)
+      batchParameters <- generateInputOutputParameters
+      createParameters = createPipelineParameters(batchParameters, customLabels)
       drsLocalizationManifestCloudPath = jobPaths.callExecutionRoot / GcpBatchJobPaths.DrsLocalizationManifestName
       _ <- uploadDrsLocalizationManifest(createParameters, drsLocalizationManifestCloudPath)
       gcsTransferConfiguration = initializationData.gcpBatchConfiguration.batchAttributes.gcsTransferConfiguration
@@ -861,11 +864,17 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
       _ <- uploadGcsLocalizationScript(createParameters, gcsLocalizationScriptCloudPath, transferLibraryContainerPath, gcsTransferConfiguration, referenceInputsToMountedPathsOpt)
       gcsDelocalizationScriptCloudPath = jobPaths.callExecutionRoot / GcpBatchJobPaths.GcsDelocalizationScriptName
       _ <- uploadGcsDelocalizationScript(createParameters, gcsDelocalizationScriptCloudPath, transferLibraryContainerPath, gcsTransferConfiguration)
-      //_ = this.hasDockerCredentials = createParameters.privateDockerKeyAndEncryptedToken.isDefined
-      //_ <- uploadGcsTransferLibrary(createParameters, gcsTransferLibraryCloudPath, gcsTransferConfiguration)
+      _ = this.hasDockerCredentials = createParameters.privateDockerKeyAndEncryptedToken.isDefined
       jobName = "job-" + java.util.UUID.randomUUID.toString
       request = GcpBatchRequest(workflowId, createParameters, jobName = jobName, gcpBatchParameters)
       response <- runPipeline(request = request, backendSingletonActor = backendSingletonActor)
+      _ = sendGoogleLabelsToMetadata(customLabels)
+      _ = sendIncrementMetricsForReferenceFiles(referenceInputsToMountedPathsOpt.map(_.keySet))
+      //_ = sendIncrementMetricsForDockerImageCache(
+        //dockerImageCacheDiskOpt = createParameters.dockerImageCacheDiskOpt,
+        //dockerImageAsSpecifiedByUser = runtimeAttributes.dockerImage,
+        //isDockerImageCacheUsageRequested = isDockerImageCacheUsageRequested
+
     } yield response
 
     // TODO: Handle when the job gets aborted before it starts being processed
@@ -974,6 +983,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     }
   }
 
+  //TODO: determine if needed
   /*
   override def globParentDirectory(womGlobFile: WomGlobFile): Path = {
     val (_, disk) = relativePathAndAttachedDisk(womGlobFile.value, runtimeAttributes.disks)
@@ -1038,12 +1048,12 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     )
   }
 
-  def womFileToGcsPath(jesOutputs: Set[GcpBatchOutput])(womFile: WomFile): WomFile = {
+  def womFileToGcsPath(batchOutputs: Set[GcpBatchOutput])(womFile: WomFile): WomFile = {
     womFile mapFile { path =>
-      jesOutputs collectFirst {
-        case jesOutput if jesOutput.name == makeSafeReferenceName(path) =>
-          val pathAsString = jesOutput.cloudPath.pathAsString
-          if (jesOutput.isFileParameter && !jesOutput.cloudPath.exists) {
+      batchOutputs collectFirst {
+        case batchOutput if batchOutput.name == makeSafeReferenceName(path) =>
+          val pathAsString = batchOutput.cloudPath.pathAsString
+          if (batchOutput.isFileParameter && !batchOutput.cloudPath.exists) {
             // This is not an error if the path represents a `File?` optional output (the PAPI delocalization script
             // should have failed if this file output was not optional but missing). Throw to produce the correct "empty
             // optional" value for a missing optional file output.
