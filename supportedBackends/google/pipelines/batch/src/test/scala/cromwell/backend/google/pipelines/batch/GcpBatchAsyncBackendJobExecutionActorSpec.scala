@@ -138,7 +138,7 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
 
       this(
         DefaultStandardAsyncExecutionActorParams(
-          jobIdKey = GcpBatchAsyncBackendJobExecutionActor.JesOperationIdKey,
+          jobIdKey = GcpBatchAsyncBackendJobExecutionActor.GcpBatchOperationIdKey,
           serviceRegistryActor = serviceRegistryActor,
           ioActor = ioActor,
           jobDescriptor = jobDescriptor,
