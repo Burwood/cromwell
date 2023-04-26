@@ -10,7 +10,7 @@ task myTask {
     runtime {
       docker: "debian:latest"
       bootDiskSizeGb: 50
-      zones: "us-south1-a"
+      zones: "us-central1-a"
     }
 
 }

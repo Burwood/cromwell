@@ -616,8 +616,8 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
           referenceDisksForLocalizationOpt = referenceDisksToMount,
           monitoringImage = monitoringImage,
           checkpointingConfiguration,
-          enableSshAccess = enableSshAccess
-          //vpcNetworkAndSubnetworkProjectLabels = data.vpcNetworkAndSubnetworkProjectLabels,
+          enableSshAccess = enableSshAccess,
+          vpcNetworkAndSubnetworkProjectLabels = data.vpcNetworkAndSubnetworkProjectLabels,
           //dockerImageCacheDiskOpt = isDockerImageCacheUsageRequested.option(dockerImageCacheDiskOpt).flatten
         )
       case Some(other) =>

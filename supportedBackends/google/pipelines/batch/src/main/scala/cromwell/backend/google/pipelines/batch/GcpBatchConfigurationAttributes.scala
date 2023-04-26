@@ -327,7 +327,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
       case Valid(r) => r
       case Invalid(f) =>
         throw new IllegalArgumentException with MessageAggregation {
-          override val exceptionContext = "Google Pipelines API configuration is not valid: Errors"
+          override val exceptionContext = "Google Cloud Batch configuration is not valid: Errors"
           override val errorMessages: List[String] = f.toList
         }
     }
