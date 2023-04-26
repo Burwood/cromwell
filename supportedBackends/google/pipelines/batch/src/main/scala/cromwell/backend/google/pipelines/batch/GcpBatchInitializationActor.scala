@@ -7,7 +7,7 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes
 import com.google.api.services.cloudkms.v1.{CloudKMS, CloudKMSScopes}
 import com.google.api.services.cloudkms.v1.model.EncryptRequest
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
-import cromwell.core.WorkflowOptions
+import cromwell.core.{Dispatcher, WorkflowOptions}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -25,7 +25,7 @@ import cromwell.filesystems.gcs.GoogleUtil._
 import com.google.api.services.genomics.v2alpha1.GenomicsScopes
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.{VirtualPrivateCloudConfiguration, VirtualPrivateCloudLabels, VirtualPrivateCloudLiterals}
 import cromwell.backend.google.pipelines.batch.models.ProjectLabels
-//import cromwell.backend.google.pipelines.batch.{ProjectLabels, VpcAndSubnetworkProjectLabelValues}
+import scala.util.Try
 import cromwell.backend.google.pipelines.batch.runnable.WorkflowOptionKeys
 import cromwell.cloudsupport.gcp.auth.GoogleAuthMode.{httpTransport, jsonFactory}
 import cromwell.cloudsupport.gcp.auth.{GoogleAuthMode, UserServiceAccountMode}
@@ -53,17 +53,15 @@ class GcpBatchInitializationActor(batchParams: GcpBatchInitializationActorParams
   override lazy val ioActor: ActorRef = batchParams.ioActor
   protected val gcpBatchConfiguration: GcpBatchConfiguration = batchParams.batchConfiguration
   protected val workflowOptions: WorkflowOptions = workflowDescriptor.workflowOptions
+  private lazy val ioEc = context.system.dispatchers.lookup(Dispatcher.IoDispatcher)
 
-
-  //private lazy val ioEc = context.system.dispatchers.lookup(Dispatcher.IoDispatcher)
+  override lazy val runtimeAttributesBuilder: StandardValidatedRuntimeAttributesBuilder =
+    GcpBatchRuntimeAttributes
+      .runtimeAttributesBuilder(gcpBatchConfiguration)
 
   // Credentials object for the GCS API
-  private lazy val gcsCredentials: Future[Credentials] = gcpBatchConfiguration
-    .batchAttributes
-    .auths
-    .gcs
-    .retryCredentials(workflowOptions, List(StorageScopes
-      .DEVSTORAGE_FULL_CONTROL))
+  private lazy val gcsCredentials: Future[Credentials] = gcpBatchConfiguration.batchAttributes.auths.gcs
+    .retryCredentials(workflowOptions, List(StorageScopes.DEVSTORAGE_FULL_CONTROL))
 
   // Credentials object for the Genomics API
   private lazy val genomicsCredentials: Future[Credentials] = gcpBatchConfiguration.batchAttributes.auths.genomics
@@ -199,30 +197,29 @@ class GcpBatchInitializationActor(batchParams: GcpBatchInitializationActorParams
     fetchVpcLabels(vpcConfig)
   }
 
-  override lazy val runtimeAttributesBuilder: StandardValidatedRuntimeAttributesBuilder =
-    GcpBatchRuntimeAttributes
-      .runtimeAttributesBuilder(gcpBatchConfiguration)
-
   override lazy val workflowPaths: Future[GcpBatchWorkflowPaths] = for {
     gcsCred <- gcsCredentials
     genomicsCred <- genomicsCredentials
     validatedPathBuilders <- pathBuilders
   } yield new GcpBatchWorkflowPaths(
-      workflowDescriptor, gcsCred, genomicsCred, gcpBatchConfiguration, validatedPathBuilders)
+      workflowDescriptor, gcsCred, genomicsCred, gcpBatchConfiguration, validatedPathBuilders, standardStreamNameToFileNameMetadataMapper)(ioEc)
 
 
   override lazy val initializationData: Future[GcpBackendInitializationData] = for {
     batchWorkflowPaths <- workflowPaths
+    gcsCreds <- gcsCredentials
     vpcNetworkAndSubnetworkProjectLabels <- vpcNetworkAndSubnetworkProjectLabelsFuture()
   } yield GcpBackendInitializationData(
     workflowPaths = batchWorkflowPaths,
     runtimeAttributesBuilder = runtimeAttributesBuilder,
     gcpBatchConfiguration = gcpBatchConfiguration,
+    gcsCredentials = gcsCreds,
     privateDockerEncryptionKeyName = privateDockerEncryptionKeyName,
     privateDockerEncryptedToken = privateDockerEncryptedToken,
     vpcNetworkAndSubnetworkProjectLabels = vpcNetworkAndSubnetworkProjectLabels
   )
-  //add in gcs credentials if necessary
+
+  override def validateWorkflowOptions(): Try[Unit] = GcpLabels.fromWorkflowOptions(workflowOptions).map(_ => ())
 
   override def beforeAll(): Future[Option[BackendInitializationData]] = {
     for {
@@ -232,11 +229,16 @@ class GcpBatchInitializationActor(batchParams: GcpBatchInitializationActorParams
     } yield Option(data)
   }
 
+  def standardStreamNameToFileNameMetadataMapper(gcpBatchJobPaths: GcpBatchJobPaths, streamName: String): String =
+    GcpBatchInitializationActor.defaultStandardStreamNameToFileNameMetadataMapper(gcpBatchJobPaths, streamName)
+
   override lazy val ioCommandBuilder: GcsBatchCommandBuilder.type = GcsBatchCommandBuilder
 
 }
 
 object GcpBatchInitializationActor {
+  // For metadata publishing purposes default to using the name of a standard stream as the stream's filename.
+  def defaultStandardStreamNameToFileNameMetadataMapper(gcpBatchJobPaths: GcpBatchJobPaths, streamName: String): String = streamName
 
   def encryptKms(keyName: String, credentials: OAuth2Credentials, plainText: String): String = {
     val httpCredentialsAdapter = new HttpCredentialsAdapter(credentials)
