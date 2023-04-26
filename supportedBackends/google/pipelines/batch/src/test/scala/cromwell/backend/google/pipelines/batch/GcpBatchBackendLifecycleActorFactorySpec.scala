@@ -54,7 +54,7 @@ class GcpBatchBackendLifecycleActorFactorySpec extends AnyFlatSpecLike with Matc
         val e = the [RuntimeException] thrownBy {
 //          GcpBatchBackendLifecycleActorFactory.robustBuildAttributes(function, initialIntervalMillis = 1, maxIntervalMillis = 5)
         }
-        e.getMessage should startWith(s"Failed to build PipelinesApiConfigurationAttributes on attempt $attempts of 3")
+        e.getMessage should startWith(s"Failed to build GcpBatchConfigurationAttributes on attempt $attempts of 3")
       }
     }
   }
