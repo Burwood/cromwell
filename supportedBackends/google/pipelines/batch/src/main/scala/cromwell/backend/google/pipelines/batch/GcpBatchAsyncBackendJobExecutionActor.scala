@@ -19,7 +19,7 @@ import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory._
 import cromwell.backend.google.pipelines.batch.io._
 import cromwell.backend.google.pipelines.batch.monitoring.{BatchInstrumentation, MonitoringImage}
 import cromwell.backend.google.pipelines.batch.runnable.WorkflowOptionKeys
-import cromwell.backend.google.pipelines.common.monitoring.CheckpointingConfiguration
+import cromwell.backend.google.pipelines.batch.monitoring.CheckpointingConfiguration
 import cromwell.backend.standard.{StandardAsyncExecutionActor, StandardAsyncExecutionActorParams, StandardAsyncJob}
 import cromwell.core._
 import cromwell.core.io.IoCommandBuilder

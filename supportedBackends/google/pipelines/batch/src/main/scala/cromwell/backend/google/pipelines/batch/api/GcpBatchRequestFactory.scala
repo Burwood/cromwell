@@ -6,8 +6,7 @@ import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.V
 import cromwell.backend.google.pipelines.batch._
 import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
 import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
-import cromwell.backend.google.pipelines.common.PipelinesApiLiteralInput
-import cromwell.backend.google.pipelines.common.monitoring.CheckpointingConfiguration
+import cromwell.backend.google.pipelines.batch.monitoring.CheckpointingConfiguration
 import cromwell.core.path.Path
 import wom.runtime.WomOutputRuntimeExtractor
 
@@ -57,7 +56,7 @@ object GcpBatchRequestFactory {
                                     jobInputParameters: List[GcpBatchInput],
                                     jobOutputParameters: List[GcpBatchOutput],
                                     detritusOutputParameters: DetritusOutputParameters,
-                                    literalInputParameters: List[PipelinesApiLiteralInput]
+                                    literalInputParameters: List[GcpBatchLiteralInput]
                                   ) {
     lazy val fileInputParameters: List[GcpBatchInput] = jobInputParameters ++ detritusInputParameters.all
     lazy val fileOutputParameters: List[GcpBatchOutput] = detritusOutputParameters.all ++ jobOutputParameters
