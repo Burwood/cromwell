@@ -3,12 +3,14 @@ package cromwell.backend.google.pipelines.batch
 import akka.actor.ActorRef
 import com.google.api.client.http.{HttpRequest, HttpResponse}
 import com.google.api.services.lifesciences.v2beta.CloudLifeSciencesScopes
+import com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes
 import com.google.api.services.cloudkms.v1.{CloudKMS, CloudKMSScopes}
 import com.google.api.services.cloudkms.v1.model.EncryptRequest
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
 import cromwell.core.WorkflowOptions
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 import com.google.auth.Credentials
 import cromwell.backend.{BackendConfigurationDescriptor, BackendInitializationData, BackendWorkflowDescriptor}
 import cromwell.backend.standard.{StandardInitializationActor, StandardInitializationActorParams, StandardValidatedRuntimeAttributesBuilder}
@@ -22,6 +24,7 @@ import com.google.api.services.storage.StorageScopes
 import cromwell.filesystems.gcs.GoogleUtil._
 import com.google.api.services.genomics.v2alpha1.GenomicsScopes
 import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.{VirtualPrivateCloudConfiguration, VirtualPrivateCloudLabels, VirtualPrivateCloudLiterals}
+import cromwell.backend.google.pipelines.batch.models.ProjectLabels
 //import cromwell.backend.google.pipelines.batch.{ProjectLabels, VpcAndSubnetworkProjectLabelValues}
 import cromwell.backend.google.pipelines.batch.runnable.WorkflowOptionKeys
 import cromwell.cloudsupport.gcp.auth.GoogleAuthMode.{httpTransport, jsonFactory}
@@ -127,7 +130,7 @@ class GcpBatchInitializationActor(batchParams: GcpBatchInitializationActorParams
 
     def projectMetadataRequest(vpcConfig: VirtualPrivateCloudLabels): Future[HttpRequest] = {
       Future {
-        val credentials = vpcConfig.auth.credentials(workflowOptions.get(_).get, List(CloudLifeSciencesScopes.CLOUD_PLATFORM))
+        val credentials = vpcConfig.auth.credentials(workflowOptions.get(_).getOrElse(throw new RuntimeException("Unable to find the necessary workflow option for auth credentials")), List(CloudResourceManagerScopes.CLOUD_PLATFORM))
 
         val httpCredentialsAdapter = new HttpCredentialsAdapter(credentials)
         val cloudResourceManagerBuilder = new CloudResourceManager
@@ -144,7 +147,7 @@ class GcpBatchInitializationActor(batchParams: GcpBatchInitializationActorParams
     def projectMetadataResponseToLabels(httpResponse: HttpResponse): Future[ProjectLabels] = {
       implicit val googleProjectMetadataLabelDecoder: Decoder[ProjectLabels] = deriveDecoder
       Future.fromTry(decode[ProjectLabels](httpResponse.parseAsString()).toTry).recoverWith {
-        case e: Throwable => Future.failed(new RuntimeException(s"Failed to parse labels from project metadata response from Google Cloud Resource Manager API. " +
+        case NonFatal(e) => Future.failed(new RuntimeException(s"Failed to parse labels from project metadata response from Google Cloud Resource Manager API. " +
           s"${ExceptionUtils.getMessage(e)}", e))
       }
     }
