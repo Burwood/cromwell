@@ -1,18 +1,20 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.models
 
 import com.google.cloud.NoCredentials
 import common.collections.EnhancedCollections._
 import cromwell.backend.BackendSpec
-import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.{batchConfiguration, pathBuilders}
 import cromwell.backend.google.pipelines.batch.actors.GcpBatchInitializationActor
-import cromwell.backend.google.pipelines.batch.models.{GcpBatchJobPaths, GcpBatchWorkflowPaths}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchTestConfig.{batchConfiguration, pathBuilders}
+import cromwell.backend.io.JobPathsSpecHelper._
 import cromwell.core.TestKitSuite
 import cromwell.util.SampleWdl
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import spray.json.{JsObject, JsString}
 
-class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Matchers {
+import scala.concurrent.ExecutionContext.Implicits.global
+
+class GcpBatchJobPathsSpec extends TestKitSuite with AnyFlatSpecLike with Matchers {
 
   import BackendSpec._
 
@@ -46,7 +48,7 @@ class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Match
     // TODO: review if the method defaultStandardStreamNameToFileNameMetadataMapper is required in the initialization actor
     val workflowPaths = GcpBatchWorkflowPaths(workflowDescriptor, NoCredentials.getInstance(), NoCredentials.getInstance(), batchConfiguration, pathBuilders(), GcpBatchInitializationActor.defaultStandardStreamNameToFileNameMetadataMapper)
 
-    val callPaths = models.GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
+    val callPaths = GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
 
     callPaths.returnCode.pathAsString should
       be(s"gs://my-cromwell-workflows-bucket/wf_hello/${workflowDescriptor.id}/call-hello/rc")
@@ -58,7 +60,8 @@ class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Match
       be(s"gs://my-cromwell-workflows-bucket/wf_hello/${workflowDescriptor.id}/call-hello/hello.log")
   }
 
-  it should "map the correct call context" in (pending) {
+  it should "map the correct call context" in {
+    pending
     val workflowDescriptor = buildWdlWorkflowDescriptor(
       SampleWdl.HelloWorld.workflowSource(),
       inputFileAsJson = Option(JsObject(SampleWdl.HelloWorld.rawInputs.safeMapValues(JsString.apply)).compactPrint)
@@ -68,7 +71,7 @@ class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Match
     // TODO: review if the method defaultStandardStreamNameToFileNameMetadataMapper is required in the initialization actor
     val workflowPaths = GcpBatchWorkflowPaths(workflowDescriptor, NoCredentials.getInstance(), NoCredentials.getInstance(), batchConfiguration, pathBuilders(), GcpBatchInitializationActor.defaultStandardStreamNameToFileNameMetadataMapper)
 
-    val callPaths = models.GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
+    val callPaths = GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
 
     callPaths.callContext.root.pathAsString should
       be(s"gs://my-cromwell-workflows-bucket/wf_hello/${workflowDescriptor.id}/call-hello")

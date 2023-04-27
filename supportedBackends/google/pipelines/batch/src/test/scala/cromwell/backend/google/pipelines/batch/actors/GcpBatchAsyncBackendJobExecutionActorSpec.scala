@@ -1,4 +1,4 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.actors
 
 import _root_.io.grpc.Status
 import _root_.wdl.draft2.model._
@@ -12,15 +12,17 @@ import cromwell.backend.BackendJobExecutionActor.{BackendJobExecutionResponse, J
 import cromwell.backend._
 import cromwell.backend.async.AsyncBackendJobExecutionActor.{Execute, ExecutionMode}
 import cromwell.backend.async.{AbortedExecutionHandle, ExecutionHandle, FailedNonRetryableExecutionHandle, FailedRetryableExecutionHandle}
-import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.batchConfiguration
-import cromwell.backend.google.pipelines.batch.actors.GcpBatchAsyncBackendJobExecutionActor
+import cromwell.backend.google.pipelines.batch.GcpBatchBackendLifecycleActorFactory
 import cromwell.backend.google.pipelines.batch.actors.GcpBatchAsyncBackendJobExecutionActor.GcpBatchPendingExecutionHandle
-import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchFileInput, GcpBatchInput, GcpBatchRuntimeAttributes, Run}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchTestConfig.batchConfiguration
+import cromwell.backend.google.pipelines.batch.models._
 import cromwell.backend.google.pipelines.batch.util.GcpBatchExpressionFunctions
+import cromwell.backend.google.pipelines.common.PipelinesApiAsyncBackendJobExecutionActor.JesPendingExecutionHandle
 import cromwell.backend.google.pipelines.common.api.PipelinesApiRequestFactory
 import cromwell.backend.google.pipelines.common.api.PipelinesApiRequestManager.PAPIStatusPollRequest
 import cromwell.backend.google.pipelines.common.api.RunStatus.UnsuccessfulRunStatus
 import cromwell.backend.google.pipelines.common.io.{DiskType, PipelinesApiWorkingDisk}
+import cromwell.backend.google.pipelines.common.{Run, _}
 import cromwell.backend.io.JobPathsSpecHelper._
 import cromwell.backend.standard.{DefaultStandardAsyncExecutionActorParams, StandardAsyncExecutionActorParams, StandardAsyncJob, StandardExpressionFunctionsParams}
 import cromwell.core._
@@ -75,23 +77,23 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
 
   val YoSup: String =
     s"""
-      |task sup {
-      |  String addressee
-      |  command {
-      |    echo "yo sup $${addressee}!"
-      |  }
-      |  output {
-      |    String salutation = read_string(stdout())
-      |  }
-      |  runtime {
-      |    docker: "ubuntu:latest"
-      |    [PREEMPTIBLE]
-      |  }
-      |}
-      |
-      |workflow wf_sup {
-      |  call sup
-      |}
+       |task sup {
+       |  String addressee
+       |  command {
+       |    echo "yo sup $${addressee}!"
+       |  }
+       |  output {
+       |    String salutation = read_string(stdout())
+       |  }
+       |  runtime {
+       |    docker: "ubuntu:latest"
+       |    [PREEMPTIBLE]
+       |  }
+       |}
+       |
+       |workflow wf_sup {
+       |  call sup
+       |}
     """.stripMargin
 
   val Inputs: Map[FullyQualifiedName, WomValue] = Map("wf_sup.sup.addressee" -> WomString("dog"))
@@ -306,9 +308,9 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
       (0, 0, 0, Status.OUT_OF_RANGE, "14: test error msg", false, false),
       // These commented out tests should be uncommented if/when we stop mapping 13 to 14 in preemption mode
       // 1 preemptible attempt allowed, but not all failures represent preemptions.
-//      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
-//      (0, 1, 1, Status.ABORTED, "13: retryable error", true, true),
-//      (0, 2, 1, Status.ABORTED, "13: retryable error", true, false),
+      //      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
+      //      (0, 1, 1, Status.ABORTED, "13: retryable error", true, true),
+      //      (0, 2, 1, Status.ABORTED, "13: retryable error", true, false),
       // The following 13 based test should be removed if/when we stop mapping 13 to 14 in preemption mode
       (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
       (0, 0, 1, Status.ABORTED, "14: preempted", true, true),
@@ -459,17 +461,17 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
   }
 
   it should "not restart 2 of 1 unexpected shutdowns without another preemptible VM" in {
-//    val actorRef = buildPreemptibleTestActorRef(2, 1)
-//    val jesBackend = actorRef.underlyingActor
-//    val runId = StandardAsyncJob(UUID.randomUUID().toString)
-//    val handle = new GcpBatchPendingExecutionHandle(null, runId, None, None)
-//
-//    val failedStatus = UnsuccessfulRunStatus(Status.ABORTED, Option("14: VM XXX shut down unexpectedly."), Seq.empty, Option("fakeMachine"), Option("fakeZone"), Option("fakeInstance"), wasPreemptible = true)
-//    val executionResult = jesBackend.handleExecutionResult(failedStatus, handle)
-//    val result = Await.result(executionResult, timeout)
-//    result.isInstanceOf[FailedNonRetryableExecutionHandle] shouldBe true
-//    val failedHandle = result.asInstanceOf[FailedNonRetryableExecutionHandle]
-//    failedHandle.returnCode shouldBe None
+    //    val actorRef = buildPreemptibleTestActorRef(2, 1)
+    //    val jesBackend = actorRef.underlyingActor
+    //    val runId = StandardAsyncJob(UUID.randomUUID().toString)
+    //    val handle = new GcpBatchPendingExecutionHandle(null, runId, None, None)
+    //
+    //    val failedStatus = UnsuccessfulRunStatus(Status.ABORTED, Option("14: VM XXX shut down unexpectedly."), Seq.empty, Option("fakeMachine"), Option("fakeZone"), Option("fakeInstance"), wasPreemptible = true)
+    //    val executionResult = jesBackend.handleExecutionResult(failedStatus, handle)
+    //    val result = Await.result(executionResult, timeout)
+    //    result.isInstanceOf[FailedNonRetryableExecutionHandle] shouldBe true
+    //    val failedHandle = result.asInstanceOf[FailedNonRetryableExecutionHandle]
+    //    failedHandle.returnCode shouldBe None
   }
 
   it should "restart 1 of 1 unexpected shutdowns without another preemptible VM" in {

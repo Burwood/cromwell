@@ -1,11 +1,8 @@
-package cromwell.backend.google.pipelines.batch
-
+package cromwell.backend.google.pipelines.batch.models
 
 import cats.data.NonEmptyList
 import cromwell.backend.RuntimeAttributeDefinition
-import cromwell.backend.google.pipelines.batch.{GcpBatchTestConfig}
-import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig._
-import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchRuntimeAttributes}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchTestConfig._
 //import cromwell.backend.google.pipelines.batch.io.{DiskType, GcpBatchAttachedDisk}
 //import cromwell.backend.google.pipelines.batch.io.{DiskType, GcpBatchAttachedDisk, PipelinesApiWorkingDisk}
 //import cromwell.backend.validation.{ContinueOnReturnCodeFlag, ContinueOnReturnCodeSet}

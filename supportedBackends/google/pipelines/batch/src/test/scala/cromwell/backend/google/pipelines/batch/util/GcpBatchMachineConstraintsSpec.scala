@@ -1,8 +1,7 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.util
 
 import common.assertion.CromwellTimeoutSpec
 import cromwell.backend.google.pipelines.batch.models.GcpBatchRuntimeAttributes
-import cromwell.backend.google.pipelines.batch.util.GcpBatchMachineConstraints
 import eu.timepit.refined.numeric.Positive
 import eu.timepit.refined.refineMV
 import org.scalatest.flatspec.AnyFlatSpec
@@ -64,7 +63,7 @@ class GcpBatchMachineConstraintsSpec extends AnyFlatSpec with CromwellTimeoutSpe
       (MemorySize(1024.0, MemoryUnit.MB), refineMV[Positive](1), n2Option, false, "n2-custom-2-2048"),
       (MemorySize(2, MemoryUnit.GB), refineMV[Positive](33), n2Option, false, "n2-custom-36-36864"),
 
-      // Same tests but with AMD Rome (n2d) #cpu > 16 are in increments of 16  
+      // Same tests but with AMD Rome (n2d) #cpu > 16 are in increments of 16
       (MemorySize(1024, MemoryUnit.MB), refineMV[Positive](1), n2dOption, false, "n2d-custom-2-1024"),
       (MemorySize(4,  MemoryUnit.GB), refineMV[Positive](3), n2dOption, false, "n2d-custom-4-4096"),
       (MemorySize(1, MemoryUnit.GB), refineMV[Positive](1), n2dOption, false, "n2d-custom-2-1024"),
@@ -73,7 +72,7 @@ class GcpBatchMachineConstraintsSpec extends AnyFlatSpec with CromwellTimeoutSpe
       (MemorySize(13.65, MemoryUnit.GB), refineMV[Positive](1), n2dOption, false, "n2d-custom-2-14080"),
       (MemorySize(1520.96, MemoryUnit.MB), refineMV[Positive](1), n2dOption, false, "n2d-custom-2-1536"),
       (MemorySize(1024.0, MemoryUnit.MB), refineMV[Positive](1), n2dOption, false, "n2d-custom-2-1024"),
-      (MemorySize(2, MemoryUnit.GB), refineMV[Positive](33), n2dOption, false, "n2d-custom-48-24576"), 
+      (MemorySize(2, MemoryUnit.GB), refineMV[Positive](33), n2dOption, false, "n2d-custom-48-24576"),
       (MemorySize(2, MemoryUnit.GB), refineMV[Positive](81), n2dOption, false, "n2d-custom-96-49152"),
       (MemorySize(256, MemoryUnit.GB), refineMV[Positive](128), n2dOption, false, "n2d-custom-96-262144")
     )

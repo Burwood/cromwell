@@ -1,7 +1,6 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.io
 
 import common.assertion.CromwellTimeoutSpec
-import cromwell.backend.google.pipelines.batch.io.{DiskType, GcpBatchAttachedDisk, PipelinesApiEmptyMountedDisk, GcpBatchWorkingDisk}
 import cromwell.core.path.DefaultPathBuilder
 import org.scalatest.TryValues
 import org.scalatest.flatspec.AnyFlatSpec

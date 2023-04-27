@@ -1,11 +1,11 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.models
 
 import cats.data.Validated.{Invalid, Valid}
 import common.assertion.CromwellTimeoutSpec
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class GcpBatchLabelsSpec extends AnyFlatSpec with CromwellTimeoutSpec with Matchers {
+class GcpBatchLabelSpec extends AnyFlatSpec with CromwellTimeoutSpec with Matchers {
 
   behavior of "GoogleLabels"
 
@@ -25,14 +25,14 @@ class GcpBatchLabelsSpec extends AnyFlatSpec with CromwellTimeoutSpec with Match
 
   googleLabelConversions foreach { case (label: String, conversion: String) =>
     it should s"not validate the bad label key '$label'" in {
-      GcpLabels.validateLabelRegex(label) match {
+      GcpLabel.validateLabelRegex(label) match {
         case Invalid(_) => // Good!
         case Valid(_) => fail(s"Label validation succeeded but should have failed.")
       }
     }
 
     it should s"convert the bad label string '$label' into the safe label string '$conversion'" in {
-      GcpLabels.safeGoogleName(label) should be(conversion)
+      GcpLabel.safeGoogleName(label) should be(conversion)
     }
   }
 }

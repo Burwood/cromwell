@@ -1,6 +1,5 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.models
 
-import cromwell.backend.google.pipelines.batch.models.VpcAndSubnetworkProjectLabelValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks

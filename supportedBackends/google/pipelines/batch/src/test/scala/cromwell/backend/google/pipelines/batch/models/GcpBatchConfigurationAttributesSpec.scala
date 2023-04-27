@@ -1,13 +1,12 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.models
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.validated._
 import com.typesafe.config.{Config, ConfigFactory}
 import common.assertion.CromwellTimeoutSpec
 import common.exception.MessageAggregation
-import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.BatchGlobalConfig
-import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes
 import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes._
+import cromwell.backend.google.pipelines.batch.models.GcpBatchTestConfig.BatchGlobalConfig
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.cloudsupport.gcp.auth.MockAuthMode
 import cromwell.filesystems.gcs.GcsPathBuilder
@@ -265,27 +264,27 @@ class GcpBatchConfigurationAttributesSpec extends AnyFlatSpec with CromwellTimeo
 
   def configString(customContent: String = "", genomics: String = ""): String =
     s"""
-      |{
-      |   project = "myProject"
-      |   root = "gs://myBucket"
-      |   maximum-polling-interval = 600
-      |   $customContent
-      |   genomics {
-      |     // A reference to an auth defined in the `google` stanza at the top.  This auth is used to create
-      |     // Pipelines and manipulate auth JSONs.
-      |     auth = "mock"
-      |    $genomics
-      |     endpoint-url = "http://myEndpoint"
-      |   }
-      |
-      |   filesystems = {
-      |     gcs {
-      |       // A reference to a potentially different auth for manipulating files via engine functions.
-      |       auth = "mock"
-      |     }
-      |   }
-      |}
-      | """.stripMargin
+       |{
+       |   project = "myProject"
+       |   root = "gs://myBucket"
+       |   maximum-polling-interval = 600
+       |   $customContent
+       |   genomics {
+       |     // A reference to an auth defined in the `google` stanza at the top.  This auth is used to create
+       |     // Pipelines and manipulate auth JSONs.
+       |     auth = "mock"
+       |    $genomics
+       |     endpoint-url = "http://myEndpoint"
+       |   }
+       |
+       |   filesystems = {
+       |     gcs {
+       |       // A reference to a potentially different auth for manipulating files via engine functions.
+       |       auth = "mock"
+       |     }
+       |   }
+       |}
+       | """.stripMargin
 
   it should "parse gsutil memory specifications" in {
     pending

@@ -1,10 +1,9 @@
-package cromwell.backend.google.pipelines.batch
+package cromwell.backend.google.pipelines.batch.models
 
 import com.typesafe.config.ConfigFactory
 import common.assertion.CromwellTimeoutSpec
 import cromwell.backend.BackendConfigurationDescriptor
-import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig._
-import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchConfigurationAttributes}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchTestConfig._
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.core.path.DefaultPathBuilder
 import org.scalatest.BeforeAndAfterAll
@@ -25,24 +24,24 @@ class GcpBatchConfigurationSpec extends AnyFlatSpec with CromwellTimeoutSpec wit
 
   val globalConfig = ConfigFactory.parseString(
     s"""
-      |google {
-      |
-      |  application-name = "cromwell"
-      |
-      |  auths = [
-      |    {
-      |      name = "application-default"
-      |      scheme = "application_default"
-      |    },
-      |    {
-      |      name = "service-account"
-      |      scheme = "service_account"
-      |      service-account-id = "my-service-account"
-      |      pem-file = "${mockFile.pathAsString}"
-      |    }
-      |  ]
-      |}
-      |
+       |google {
+       |
+       |  application-name = "cromwell"
+       |
+       |  auths = [
+       |    {
+       |      name = "application-default"
+       |      scheme = "application_default"
+       |    },
+       |    {
+       |      name = "service-account"
+       |      scheme = "service_account"
+       |      service-account-id = "my-service-account"
+       |      pem-file = "${mockFile.pathAsString}"
+       |    }
+       |  ]
+       |}
+       |
     """.stripMargin)
 
   val backendConfig = ConfigFactory.parseString(
