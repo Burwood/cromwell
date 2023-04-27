@@ -2,11 +2,10 @@ package cromwell.backend.google.pipelines.batch.api
 
 import com.google.cloud.batch.v1.{CreateJobRequest, DeleteJobRequest, GetJobRequest, JobName}
 import cromwell.backend.BackendJobDescriptor
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.VirtualPrivateCloudConfiguration
-import cromwell.backend.google.pipelines.batch._
 import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
-import cromwell.backend.google.pipelines.batch.monitoring.MonitoringImage
-import cromwell.backend.google.pipelines.batch.monitoring.CheckpointingConfiguration
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.VirtualPrivateCloudConfiguration
+import cromwell.backend.google.pipelines.batch.models._
+import cromwell.backend.google.pipelines.batch.monitoring.{CheckpointingConfiguration, MonitoringImage}
 import cromwell.core.path.Path
 import wom.runtime.WomOutputRuntimeExtractor
 

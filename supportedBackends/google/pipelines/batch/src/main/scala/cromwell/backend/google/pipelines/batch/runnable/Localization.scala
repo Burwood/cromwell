@@ -3,11 +3,11 @@ package cromwell.backend.google.pipelines.batch.runnable
 //import cloud.nio.impl.drs.DrsConfig
 import com.google.cloud.batch.v1.{Runnable, Volume}
 import com.typesafe.config.ConfigFactory
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
-import cromwell.backend.google.pipelines.batch.GcpBatchParameterConversions._
-import cromwell.backend.google.pipelines.batch.ToParameter.ops._
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
-import cromwell.backend.google.pipelines.batch.{GcpBatchFileInput, GcpBatchJobPaths}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchFileInput, GcpBatchJobPaths}
+import cromwell.backend.google.pipelines.batch.util.GcpBatchParameterConversions._
+import cromwell.backend.google.pipelines.batch.util.ToParameter.ops._
 import cromwell.core.path.Path
 import cromwell.filesystems.drs.DrsPath
 //import scala.jdk.CollectionConverters._

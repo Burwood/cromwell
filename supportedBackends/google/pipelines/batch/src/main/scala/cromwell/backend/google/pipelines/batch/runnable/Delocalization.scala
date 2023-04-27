@@ -2,12 +2,12 @@ package cromwell.backend.google.pipelines.batch.runnable
 
 import com.google.cloud.batch.v1.{Runnable, Volume}
 import common.util.StringUtil._
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
-import cromwell.backend.google.pipelines.batch.GcpBatchJobPaths.GcsDelocalizationScriptName
-import cromwell.backend.google.pipelines.batch.GcpBatchParameterConversions._
-import cromwell.backend.google.pipelines.batch.ToParameter.ops._
-import cromwell.backend.google.pipelines.batch._
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.GcpBatchJobPaths.GcsDelocalizationScriptName
+import cromwell.backend.google.pipelines.batch.util.GcpBatchParameterConversions._
+import cromwell.backend.google.pipelines.batch.util.RuntimeOutputMapping
+import cromwell.backend.google.pipelines.batch.util.ToParameter.ops._
 import cromwell.core.path.Path
 import wom.runtime.WomOutputRuntimeExtractor
 

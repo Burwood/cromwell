@@ -2,7 +2,7 @@ package cromwell.backend.google.pipelines.batch.runnable
 
 import akka.http.scaladsl.model.ContentType
 import common.util.StringUtil._
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.core.path.Path
 import cromwell.filesystems.gcs.GcsPath
 import cromwell.filesystems.gcs.RequesterPaysErrors._

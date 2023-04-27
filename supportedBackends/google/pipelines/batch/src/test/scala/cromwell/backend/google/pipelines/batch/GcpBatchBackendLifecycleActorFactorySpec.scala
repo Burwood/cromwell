@@ -1,5 +1,6 @@
 package cromwell.backend.google.pipelines.batch
 
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes
 import eu.timepit.refined.numeric.Positive
 import eu.timepit.refined.refineV
 import org.scalatest.flatspec.AnyFlatSpecLike
