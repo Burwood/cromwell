@@ -1,8 +1,8 @@
 package cromwell.backend.google.pipelines.batch.runnable
 
 import com.google.cloud.batch.v1.{Runnable, Volume}
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactory.CreatePipelineParameters
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 
 trait MonitoringRunnable {
   def monitoringSetupRunnables(createParameters: CreatePipelineParameters,

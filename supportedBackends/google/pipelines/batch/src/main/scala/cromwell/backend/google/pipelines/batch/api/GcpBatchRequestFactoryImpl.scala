@@ -2,18 +2,18 @@ package cromwell.backend.google.pipelines.batch.api
 
 import com.google.cloud.batch.v1.AllocationPolicy.Accelerator
 import com.google.cloud.batch.v1.{DeleteJobRequest, GetJobRequest, JobName}
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.GcpBatchRequest
 import cromwell.backend.google.pipelines.batch.runnable._
-import cromwell.backend.google.pipelines.batch.{BatchUtilityConversions, GcpBatchRequest}
+import cromwell.backend.google.pipelines.batch.util.BatchUtilityConversions
 //import com.google.cloud.batch.v1.AllocationPolicy._
-import com.google.cloud.batch.v1.AllocationPolicy.{InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy, ProvisioningModel}
-import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec}
-import cromwell.backend.google.pipelines.batch.VpcAndSubnetworkProjectLabelValues
-import com.google.cloud.batch.v1.AllocationPolicy.AttachedDisk
+import com.google.cloud.batch.v1.AllocationPolicy.{AttachedDisk, InstancePolicy, InstancePolicyOrTemplate, LocationPolicy, NetworkInterface, NetworkPolicy, ProvisioningModel}
 import com.google.cloud.batch.v1.LogsPolicy.Destination
-import com.google.cloud.batch.v1.Volume
+import com.google.cloud.batch.v1.{AllocationPolicy, ComputeResource, CreateJobRequest, Job, LogsPolicy, Runnable, ServiceAccount, TaskGroup, TaskSpec, Volume}
 import com.google.protobuf.Duration
 import cromwell.backend.google.pipelines.batch.io.GcpBatchAttachedDisk
+import cromwell.backend.google.pipelines.batch.models.VpcAndSubnetworkProjectLabelValues
+
 import scala.jdk.CollectionConverters._
 
 class GcpBatchRequestFactoryImpl()(implicit gcsTransferConfiguration: GcsTransferConfiguration) extends GcpBatchRequestFactory

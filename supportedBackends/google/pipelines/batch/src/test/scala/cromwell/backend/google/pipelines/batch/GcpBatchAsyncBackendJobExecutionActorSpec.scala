@@ -13,7 +13,10 @@ import cromwell.backend._
 import cromwell.backend.async.AsyncBackendJobExecutionActor.{Execute, ExecutionMode}
 import cromwell.backend.async.{AbortedExecutionHandle, ExecutionHandle, FailedNonRetryableExecutionHandle, FailedRetryableExecutionHandle}
 import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.batchConfiguration
-import cromwell.backend.google.pipelines.batch.GcpBatchAsyncBackendJobExecutionActor.GcpBatchPendingExecutionHandle
+import cromwell.backend.google.pipelines.batch.actors.GcpBatchAsyncBackendJobExecutionActor
+import cromwell.backend.google.pipelines.batch.actors.GcpBatchAsyncBackendJobExecutionActor.GcpBatchPendingExecutionHandle
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchFileInput, GcpBatchInput, GcpBatchRuntimeAttributes, Run}
+import cromwell.backend.google.pipelines.batch.util.GcpBatchExpressionFunctions
 import cromwell.backend.google.pipelines.common.api.PipelinesApiRequestFactory
 import cromwell.backend.google.pipelines.common.api.PipelinesApiRequestManager.PAPIStatusPollRequest
 import cromwell.backend.google.pipelines.common.api.RunStatus.UnsuccessfulRunStatus

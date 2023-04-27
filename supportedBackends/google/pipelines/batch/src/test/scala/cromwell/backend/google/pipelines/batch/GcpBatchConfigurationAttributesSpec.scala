@@ -6,7 +6,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import common.assertion.CromwellTimeoutSpec
 import common.exception.MessageAggregation
 import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.BatchGlobalConfig
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes._
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes._
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.cloudsupport.gcp.auth.MockAuthMode
 import cromwell.filesystems.gcs.GcsPathBuilder

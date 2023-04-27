@@ -4,6 +4,8 @@ import com.google.cloud.NoCredentials
 import common.collections.EnhancedCollections._
 import cromwell.backend.BackendSpec
 import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig.{batchConfiguration, pathBuilders}
+import cromwell.backend.google.pipelines.batch.actors.GcpBatchInitializationActor
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchJobPaths, GcpBatchWorkflowPaths}
 import cromwell.core.TestKitSuite
 import cromwell.util.SampleWdl
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -44,7 +46,7 @@ class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Match
     // TODO: review if the method defaultStandardStreamNameToFileNameMetadataMapper is required in the initialization actor
     val workflowPaths = GcpBatchWorkflowPaths(workflowDescriptor, NoCredentials.getInstance(), NoCredentials.getInstance(), batchConfiguration, pathBuilders(), GcpBatchInitializationActor.defaultStandardStreamNameToFileNameMetadataMapper)
 
-    val callPaths = GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
+    val callPaths = models.GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
 
     callPaths.returnCode.pathAsString should
       be(s"gs://my-cromwell-workflows-bucket/wf_hello/${workflowDescriptor.id}/call-hello/rc")
@@ -66,7 +68,7 @@ class GcpBatchCallPathsSpec extends TestKitSuite with AnyFlatSpecLike with Match
     // TODO: review if the method defaultStandardStreamNameToFileNameMetadataMapper is required in the initialization actor
     val workflowPaths = GcpBatchWorkflowPaths(workflowDescriptor, NoCredentials.getInstance(), NoCredentials.getInstance(), batchConfiguration, pathBuilders(), GcpBatchInitializationActor.defaultStandardStreamNameToFileNameMetadataMapper)
 
-    val callPaths = GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
+    val callPaths = models.GcpBatchJobPaths(workflowPaths, jobDescriptorKey)
 
     callPaths.callContext.root.pathAsString should
       be(s"gs://my-cromwell-workflows-bucket/wf_hello/${workflowDescriptor.id}/call-hello")

@@ -1,19 +1,17 @@
 package cromwell.backend.google.pipelines.batch.callcaching
 
-import cromwell.backend.BackendInitializationData
-import cromwell.backend.google.pipelines.batch.GcpBackendInitializationData
-import cromwell.backend.standard.callcaching.{StandardCacheHitCopyingActor, StandardCacheHitCopyingActorParams}
-import cromwell.filesystems.gcs.batch.GcsBatchCommandBuilder
-import wom.values.WomFile
-
 import com.google.cloud.storage.contrib.nio.CloudStorageOptions
 import common.util.TryUtil
+import cromwell.backend.BackendInitializationData
+import cromwell.backend.google.pipelines.batch.models.GcpBackendInitializationData
 import cromwell.backend.io.JobPaths
+import cromwell.backend.standard.callcaching.{StandardCacheHitCopyingActor, StandardCacheHitCopyingActorParams}
 import cromwell.core.CallOutputs
 import cromwell.core.io.{IoCommand, IoTouchCommand}
 import cromwell.core.path.Path
 import cromwell.core.simpleton.{WomValueBuilder, WomValueSimpleton}
-
+import cromwell.filesystems.gcs.batch.GcsBatchCommandBuilder
+import wom.values.WomFile
 
 import scala.language.postfixOps
 import scala.util.Try

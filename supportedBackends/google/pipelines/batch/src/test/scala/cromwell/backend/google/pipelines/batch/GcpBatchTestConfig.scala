@@ -3,6 +3,7 @@ package cromwell.backend.google.pipelines.batch
 import akka.actor.ActorSystem
 import com.typesafe.config.{Config, ConfigFactory}
 import cromwell.backend.BackendConfigurationDescriptor
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchConfigurationAttributes}
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.core.WorkflowOptions
 import cromwell.core.filesystem.CromwellFileSystems

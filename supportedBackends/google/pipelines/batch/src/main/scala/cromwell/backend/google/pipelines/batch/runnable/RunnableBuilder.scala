@@ -2,9 +2,8 @@ package cromwell.backend.google.pipelines.batch.runnable
 
 import com.google.cloud.batch.v1.Runnable.Container
 import com.google.cloud.batch.v1.{Runnable, Volume}
-import cromwell.backend.google.pipelines.batch.GcpBatchConfigurationAttributes.GcsTransferConfiguration
-import cromwell.backend.google.pipelines.batch.api.RunnableFlag
-import cromwell.backend.google.pipelines.batch.{BatchParameter, GcpBatchInput, GcpBatchOutput}
+import cromwell.backend.google.pipelines.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
+import cromwell.backend.google.pipelines.batch.models.{BatchParameter, GcpBatchInput, GcpBatchOutput}
 import cromwell.core.path.Path
 import mouse.all.anySyntaxMouse
 

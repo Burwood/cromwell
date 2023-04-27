@@ -4,7 +4,9 @@ import akka.actor.{ActorRef, Props}
 import com.google.api.client.util.ExponentialBackOff
 import com.typesafe.scalalogging.StrictLogging
 import cromwell.backend.google.pipelines.batch.GcpBatchBackendLifecycleActorFactory.robustBuildAttributes
-import cromwell.backend.google.pipelines.batch.api.GcpBatchRequestFactoryImpl
+import cromwell.backend.google.pipelines.batch.actors._
+import cromwell.backend.google.pipelines.batch.api.{GcpBatchApiRequestHandler, GcpBatchRequestFactoryImpl}
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchConfigurationAttributes}
 import cromwell.backend.standard._
 import cromwell.backend.{BackendConfigurationDescriptor, BackendInitializationData, BackendWorkflowDescriptor, JobExecutionMap}
 import cromwell.cloudsupport.gcp.GoogleConfiguration

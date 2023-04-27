@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import common.assertion.CromwellTimeoutSpec
 import cromwell.backend.BackendConfigurationDescriptor
 import cromwell.backend.google.pipelines.batch.GcpBatchTestConfig._
+import cromwell.backend.google.pipelines.batch.models.{GcpBatchConfiguration, GcpBatchConfigurationAttributes}
 import cromwell.cloudsupport.gcp.GoogleConfiguration
 import cromwell.core.path.DefaultPathBuilder
 import org.scalatest.BeforeAndAfterAll
