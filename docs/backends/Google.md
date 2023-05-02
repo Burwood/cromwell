@@ -1,11 +1,12 @@
 **Google Cloud Backend**
 
-Google Genomics Pipelines API is a Docker-as-a-service from Google. It was formerly called JES (Job Execution Service);
-you may see outdated references to the older JES terminology in Cromwell configuration files and code.
+[//]: # (TODO: Ask if this description is okay for Batch)
+Google Batch is a fully managed service that lets you schedule, queue, and execute batch processing workloads on Google Cloud resources. Batch provisions resources and manages capacity on your behalf, allowing your batch workloads to run at scale.
 
-This section offers detailed configuration instructions for using Cromwell with the Pipelines API in all supported
+[//]: # (TODO: Need to create a BatchApi101 doc)
+This section offers detailed configuration instructions for using Cromwell with the Batch API in all supported
 authentication modes. Before reading futher in this section please see the
-[Getting started on Google Pipelines API](../tutorials/PipelinesApi101) for instructions common to all authentication modes
+[Getting started on Google Batch API](../tutorials/PipelinesApi101) for instructions common to all authentication modes
 and detailed instructions for the application default authentication scheme in particular.
 The instructions below assume you have created a Google Cloud Storage bucket and a Google project enabled for the appropriate APIs.
 
@@ -21,6 +22,7 @@ authentication schemes that might be used:
 
 The `auths` block in the `google` stanza defines the authentication schemes within a Cromwell deployment:
 
+[//]: # (TODO: Does this need to be changed to what we have in our batch.conf file?)
 ```hocon
 google {
   application-name = "cromwell"
@@ -44,8 +46,8 @@ google {
 ```
 
 These authentication schemes can be referenced by name within other portions of the configuration file.  For example, both
-the `genomics` and `filesystems.gcs` sections within a Google configuration block must reference an auth defined in this block.
-The auth for the `genomics` section governs the interactions with Google itself, while `filesystems.gcs` governs the localization
+the `batch` and `filesystems.gcs` sections within a Google configuration block must reference an auth defined in this block.
+The auth for the `batch` section governs the interactions with Google itself, while `filesystems.gcs` governs the localization
 of data into and out of GCE VMs.
 
 **Application Default Credentials**
@@ -83,7 +85,8 @@ Creating the account will cause the JSON file to be downloaded.  The structure o
 Most importantly, the value of the `client_email` field should go into the `service-account-id` field in the configuration (see below).  The
 `private_key` portion needs to be pulled into its own file (e.g. `my-key.pem`).  The `\n`s in the string need to be converted to newline characters.
 
-While technically not part of Service Account authentication mode, one can also override the default service account that the compute VM is started with via the configuration option `JES.config.genomics.compute-service-account` or through the workflow options parameter `google_compute_service_account`.  The service account you provide must have been granted Service Account Actor role to Cromwell's primary service account. As this only affects Google Pipelines API and not GCS, it's important that this service account, and the service account specified in `JES.config.genomics.auth` can both read/write the location specified by `JES.config.root`
+[//]: # (TODO: What should replace JES.config.genomics.compute-service-account and JES.config.genomics.auth)
+While technically not part of Service Account authentication mode, one can also override the default service account that the compute VM is started with via the configuration option `JES.config.batch.compute-service-account` or through the workflow options parameter `google_compute_service_account`.  The service account you provide must have been granted Service Account Actor role to Cromwell's primary service account. As this only affects Google Batch API and not GCS, it's important that this service account, and the service account specified in `JES.config.batch.auth` can both read/write the location specified by `JES.config.root`
 
 **User Service Account**
 
@@ -173,9 +176,30 @@ backend {
 }
 ```
 
+For Batch
+
+[//]: # (TODO: Is this the correct way to configure Docker for batch?)
+```
+backend {
+  default = batch
+  providers {
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchBackendLifecycleActorFactory"
+      config {
+        dockerhub {
+          token = "base64-encoded-docker-hub-username:password"
+          key-name = "name/of/the/kms/key/used/for/encrypting/and/decrypting/the/docker/hub/token"
+          auth = "reference-to-the-auth-cromwell-should-use-for-kms-encryption"
+        }
+      }
+    }
+  }
+}       
+```
+
 `key-name` is the name of the Google KMS key Cromwell should use for encrypting the Docker `token` before including it
 in the PAPI job execution request. This `key-name` will also be included in the PAPI job execution
-request and will be used by PAPI to decrypt the Docker token used by `docker login` to enable access to the private Docker image.
+request and will be used by Batch to decrypt the Docker token used by `docker login` to enable access to the private Docker image.
  
 `auth` is a reference to the name of an authorization in the `auths` block of Cromwell's `google` config.
 Cromwell will use this authorization for encrypting the Google KMS key.
@@ -190,7 +214,7 @@ If the key, token or auth value is provided in workflow options then the corresp
 is not required, and vice versa. Also note that for the `user_service_account_json` workflow option to work an auth of type `user_service_account`
 must be defined in Cromwell's `google.auths` stanza; more details in the `User Service Account` section above.
 
-Example PAPI v2 workflow options for private Docker configuration:
+Example Batch workflow options for private Docker configuration:
 
 ```
 {
@@ -202,7 +226,7 @@ Example PAPI v2 workflow options for private Docker configuration:
 
 Important
 
-If any of the three private Docker configuration values of key name, auth, or Docker token are missing, PAPI v2 will not perform a `docker login`.
+If any of the three private Docker configuration values of key name, auth, or Docker token are missing, Batch will not perform a `docker login`.
 If the Docker image to be pulled is not public the `docker pull` will fail which will cause the overall job to fail.
 
 If using any of these private Docker workflow options it is advisable to add
@@ -223,18 +247,20 @@ The output of this script will be written to a `monitoring.log` file that will b
 
 **Google Cloud Storage Filesystem**
 
-On the Google Pipelines backend the GCS (Google Cloud Storage) filesystem is used for the root of the workflow execution.
+On the Google Batch backend the GCS (Google Cloud Storage) filesystem is used for the root of the workflow execution.
 On the Local, SGE, and associated backends any GCS URI will be downloaded locally.  For the Google backend the `jes_gcs_root` [Workflow Option](../wf_options/Google) will take
 precedence over the `root` specified at `backend.providers.JES.config.root` in the configuration file. Google Cloud Storage URIs are the only acceptable values for `File` inputs for
 workflows using the Google backend.
 
-**Pipeline timeout**
+**Batch timeout**
 
-Google sets a default pipeline timeout of 7 days, after which the pipeline will abort. Setting `pipeline-timeout` overrides this limit to a maximum of 30 days.
+[//]: # (TODO: Do I replace 'pipeline' with task?)
+Google sets a default pipeline timeout of 7 days, after which the pipeline will abort. Setting `batch-timeout` overrides this limit to a maximum of 30 days.
 
+[//]: # (TODO: Changed providers.PAPIv2 to batch and pipeline-timeout to batch)
 ```hocon
-backend.providers.PAPIv2.config {
-    pipeline-timeout: 14 days
+backend.providers.batch.config {
+    batch-timeout: 14 days
 }
 ```
 
@@ -242,7 +268,7 @@ backend.providers.PAPIv2.config {
 
 *This is a community contribution and not officially supported by the Cromwell team.*
 By default Cromwell task containers doesn't allow to mount any FUSE filesystems. It happens because containers are launched without specific linux capabilities being enabled. 
-Google pipelines backend supports running containers with the enabled capabilities and so does Cromwell. 
+Google batch backend supports running containers with the enabled capabilities and so does Cromwell. 
 
 If you need to use fuses within task containers then you can set `enable_fuse` workflow option. 
 
@@ -255,8 +281,8 @@ If you need to use fuses within task containers then you can set `enable_fuse` w
 Differently you can enable support for fuses right in your backend configuration.
 
 ```
-backend.providers.Papiv2.config {
-    genomics {
+backend.providers.batch.config {
+    batch {
         enable-fuse = true
     }
 }
@@ -270,7 +296,7 @@ There is a list of limitations regarding the usage of FUSE filesystems:
 
 #### Google Labels
 
-Every call run on the Pipelines API backend is given certain labels by default, so that Google resources can be queried by these labels later. 
+Every call run on the Batch API backend is given certain labels by default, so that Google resources can be queried by these labels later. 
 The current default label set automatically applied is:
 
 | Key | Value | Example | Notes |
@@ -280,11 +306,12 @@ The current default label set automatically applied is:
 | wdl-task-name | The name of the WDL task | my-task | |
 | wdl-call-alias | The alias of the WDL call that created this job | my-task-1 | Only present if the task was called with an alias. |
 
-Any custom labels provided as '`google_labels`' in the [workflow options](../wf_options/Google) are also applied to Google resources by the Pipelines API.
+Any custom labels provided as '`google_labels`' in the [workflow options](../wf_options/Google) are also applied to Google resources by the Batch API.
 
 ## Using NCBI Sequence Read Archive (SRA) Data
 
-The v2alpha1 and v2beta backends support accessing [NCBI
+[//]: # (TODO: NCBI SRA supported on batch?)
+The batch backend supports accessing [NCBI
 SRA](https://www.ncbi.nlm.nih.gov/sra) accessions natively.  To configure this
 support you'll need to enable it in your config file like so:
 
@@ -311,7 +338,7 @@ This filesystem has two required configuration options:
 
 ### Virtual Private Network
 
-Cromwell can arrange for jobs to run in specific GCP private networks via the `config.virtual-private-cloud` stanza of a PAPI v2 backend.
+Cromwell can arrange for jobs to run in specific GCP private networks via the `config.virtual-private-cloud` stanza of a Batch backend.
 There are two ways of specifying private networks:
 
 * [Literal network and subnetwork values](#virtual-private-network-via-literals) that will apply to all projects
@@ -324,8 +351,8 @@ backend {
   ...
   providers {
     ...
-    PapiV2 {
-      actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchLifecycleActorFactory"
       config {
         ...
         virtual-private-cloud {
@@ -347,12 +374,13 @@ configuration key, which is `vpc-network` here, as the name of private network a
 If the network name is not present in the config Cromwell will fall back to trying to run jobs on the default network.
 
 If the `network-name` or `subnetwork-name` values contain the string `${projectId}` then that value will be replaced
-by Cromwell with the name of the project running the Pipelines API.
+by Cromwell with the name of the project running the Batch API.
 
 If the `network-name` does not contain a `/` then it will be prefixed with `projects/${projectId}/global/networks/`.
 
-Cromwell will then pass the network and subnetwork values to the Pipelines API. See the documentation for the
-[Cloud Life Sciences API](https://cloud.google.com/life-sciences/docs/reference/rest/v2beta/projects.locations.pipelines/run#Network)
+[//]: # (TODO: Update the link to the batch api)
+Cromwell will then pass the network and subnetwork values to the Batch API. See the documentation for the
+[Batch API](https://cloud.google.com/life-sciences/docs/reference/rest/v2beta/projects.locations.pipelines/run#Network)
 for more information on the various formats accepted for `network` and `subnetwork`.
 
 #### Virtual Private Network via Labels
@@ -362,8 +390,8 @@ backend {
   ...
   providers {
     ...
-    PapiV2 {
-      actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchLifecycleActorFactory"
       config {
         ...
         virtual-private-cloud {
@@ -413,16 +441,17 @@ is turned off by default but can be enabled backend-wide by specifying a `gsutil
 `genomics.parallel-composite-upload-threshold` in backend configuration. This memory value represents the minimum size an output file
 must have to be a candidate for `gsutil` parallel composite uploading:
 
+[//]: # (TODO: is batch correct inside the config object?)
 ```
 backend {
   ...
   providers {
     ...
-    PapiV2 {
-      actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchLifecycleActorFactory"
       config {
         ...
-        genomics {
+        batch {
           ...
           parallel-composite-upload-threshold = 150M
           ...
@@ -479,6 +508,7 @@ which would be expected to generate non-composite outputs may call cache to resu
 outputs. Calls which are executed and not cached will always honor the parallel composite upload setting at the time of
 their execution.
 
+[//]: # (TODO: Do we want a section for migration from pipelines to batch?)
 ### Migration from Google Cloud Genomics v2alpha1 to Google Cloud Life Sciences v2beta
 
 1. If you currently run your workflows using Cloud Genomics v2alpha1 and would like to switch to Google Cloud Life 
@@ -489,7 +519,7 @@ from `cromwell.backend.google.pipelines.v2alpha1.PipelinesApiLifecycleActorFacto
 3. Also you should add a new mandatory parameter `genomics.location` to your backend configuration. Currently Google Cloud 
 Life Sciences API is available only in `us-central1` and `europe-west2` locations.
 
-### Alpha support for WDL optional outputs on PAPI v2
+### Alpha support for WDL optional outputs on Batch
 
 Cromwell 53 adds alpha-quality support for WDL optional outputs on PAPI v2 backends. Constructs such as: 
 
@@ -527,10 +557,10 @@ before eventually giving up and running the job. This behavior may be corrected 
 ### Reference Disk Support
 
 Cromwell 55 and later support mounting reference disks from prebuilt GCP disk images as an alternative to localizing large
-input reference files on PAPI v2. Please note the configuration of reference disk manifests has changed starting with
+input reference files on Batch. Please note the configuration of reference disk manifests has changed starting with
 Cromwell 57 and now uses the format documented below. 
 
-Within the `config` stanza of a PAPI v2 backend the `reference-disk-localization-manifests`
+Within the `config` stanza of a Batch backend the `reference-disk-localization-manifests`
 key specifies an array of reference disk manifests:  
 
 ```hocon
@@ -538,8 +568,8 @@ backend {
   ...
   providers {
     ...
-    PapiV2 {
-      actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchLifecycleActorFactory"
       config {
         ...
         reference-disk-localization-manifests = [
@@ -574,7 +604,7 @@ Reference disk usage is an opt-in feature, so workflow submissions must specify 
 }
 ```
 
-Using the first file in the manifest above as an example, assume a PAPI v2 backend is configured to use this manifest and the appropriate
+Using the first file in the manifest above as an example, assume a Batch backend is configured to use this manifest and the appropriate
 `use_reference_disks` workflow option is set to `true` in the workflow submission. If a call in that workflow 
 specifies the input `gs://my-references/enormous_reference.bam` and because that input matches the path of a file on the
 reference image without the leading `gs://`, Cromwell would
@@ -591,7 +621,7 @@ extract reference data to a new disk and then convert that disk to a public imag
 
 ### Docker Image Cache Support
 
-To optimize job execution time, Cromwell 55 and later support the use of Docker image caches on the PAPI v2 lifesciences beta backend. Docker image caches are not available on the PAPI v2 genomics alpha backend.
+To optimize job execution time, Cromwell 55 and later support the use of Docker image caches on the Batch backend.
 Configuration looks like:
 
 ```hocon
@@ -599,8 +629,8 @@ backend {
   ...
   providers {
     ...
-    PapiV2 {
-      actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+    batch {
+      actor-factory = "cromwell.backend.google.pipelines.batch.GcpBatchLifecycleActorFactory"
       config {
         ...
         docker-image-cache-manifest-file = "gs://path/to/a/docker/image/cache/manifest.json"
@@ -643,7 +673,7 @@ task my_task {
 }
 ```
 
-If Cromwell is running a workflow on PAPI v2 beta with Docker image caching enabled and a task specifies a
+If Cromwell is running a workflow on Batch with Docker image caching enabled and a task specifies a
 Docker image which corresponds to a configured Docker image cache JSON, Cromwell will arrange for the
 job's VM to mount a disk built from the corresponding disk image. In the event that multiple
 manifests describe disk images containing the specified Docker image, Cromwell will choose the disk image with the
