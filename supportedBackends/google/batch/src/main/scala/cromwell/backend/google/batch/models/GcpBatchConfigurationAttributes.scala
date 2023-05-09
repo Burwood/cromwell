@@ -324,7 +324,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
 
 
     (project,
-      dockerCredentials,
+      validate { dockerCredentials },
       executionBucket,
       genomicsAuthName,
       location,
@@ -339,7 +339,7 @@ object GcpBatchConfigurationAttributes extends GcpBatchDockerCacheMappingOperati
       batchRequestTimeoutConfigurationValidation,
       referenceDiskLocalizationManifestFiles,
       dockerImageCacheManifestFile
-    ) flatMapN authGoogleConfigForBatchConfigurationAttributes match {
+    ).flatMapN(authGoogleConfigForBatchConfigurationAttributes) match {
       case Valid(r) => r
       case Invalid(f) =>
         throw new IllegalArgumentException with MessageAggregation {
