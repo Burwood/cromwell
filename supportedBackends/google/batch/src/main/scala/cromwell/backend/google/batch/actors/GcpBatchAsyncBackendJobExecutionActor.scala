@@ -682,7 +682,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     }
   }
 
-  private def generateInputs(jobDescriptor: BackendJobDescriptor): Set[GcpBatchInput] = {
+  private[actors] def generateInputs(jobDescriptor: BackendJobDescriptor): Set[GcpBatchInput] = {
     // We need to tell PAPI about files that were created as part of command instantiation (these need to be defined
     // as inputs that will be localized down to the VM). Make up 'names' for these files that are just the short
     // md5's of their paths.
@@ -744,7 +744,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     List(batchFileOutput)
   }
 
-  protected def generateOutputs(jobDescriptor: BackendJobDescriptor): Set[GcpBatchOutput] = {
+  private[actors] def generateOutputs(jobDescriptor: BackendJobDescriptor): Set[GcpBatchOutput] = {
     def evaluateFiles(output: OutputDefinition): List[FileEvaluation] = {
       Try(
         output.expression.evaluateFiles(jobDescriptor.localInputs, NoIoFunctionSet, output.womType).map(_.toList)
