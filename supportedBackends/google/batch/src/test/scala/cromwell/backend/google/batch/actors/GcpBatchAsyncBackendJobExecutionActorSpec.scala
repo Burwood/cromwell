@@ -684,7 +684,7 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
         }
 
         mappedInputs(gcsFileKey) match {
-          case wdlFile: WomSingleFile => assert(wdlFile.value.equalsIgnoreCase("/cromwell_root/blah/abc"))
+          case wdlFile: WomSingleFile => wdlFile.value shouldBe "/mnt/disks/cromwell_root/blah/abc"
           case _ => fail("test setup error")
         }
       case Left(badtimes) => fail(badtimes.toList.mkString(", "))
