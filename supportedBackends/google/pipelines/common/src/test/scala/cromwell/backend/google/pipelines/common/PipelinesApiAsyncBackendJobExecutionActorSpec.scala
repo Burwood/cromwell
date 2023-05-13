@@ -1085,6 +1085,7 @@ class PipelinesApiAsyncBackendJobExecutionActorSpec extends TestKitSuite
       props, s"TestableJesJobExecutionActor-${jobDescriptor.workflowDescriptor.id}")
 
     def wdlValueToGcsPath(jesOutputs: Set[PipelinesApiFileOutput])(womValue: WomValue): WomValue = {
+      println(s"wdlValueToGcsPath: ${jesOutputs}, $womValue")
       WomFileMapper.mapWomFiles(testActorRef.underlyingActor.womFileToGcsPath(jesOutputs.toSet))(womValue).get
     }
 
