@@ -928,7 +928,6 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
   }
 
   it should "generate correct JesFileInputs from a WdlArray" in {
-    pending
     val inputs: Map[String, WomValue] = Map(
       "fileArray" ->
         WomArray(WomArrayType(WomSingleFileType), Seq(WomSingleFile("gs://path/to/file1"), WomSingleFile("gs://path/to/file2")))
@@ -971,7 +970,6 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
 
         val jesInputs = testActorRef.underlyingActor.generateInputs(jobDescriptor)
         jesInputs should have size 2
-        // Set(GcpBatchFileInput(fileArray,gs://path/to/file1,path/to/file1,local-disk 200 SSD), GcpBatchFileInput(fileArray,gs://path/to/file2,path/to/file2,local-disk 200 SSD)) did not contain element GcpBatchFileInput(wf_whereami.whereami.fileArray-0,gs://path/to/file1,path/to/file1,local-disk 200 SSD)
         jesInputs should contain(GcpBatchFileInput(
           name = "wf_whereami.whereami.fileArray-0",
           cloudPath = gcsPath("gs://path/to/file1"),
@@ -1031,7 +1029,7 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
 
         val jesInputs = testActorRef.underlyingActor.generateInputs(jobDescriptor)
         jesInputs should have size 2
-        // Set(GcpBatchFileInput(file1,gs://path/to/file1,path/to/file1,local-disk 200 SSD), GcpBatchFileInput(file2,gs://path/to/file2,path/to/file2,local-disk 200 SSD)) did not contain element GcpBatchFileInput(wf_whereami.whereami.file1-0,gs://path/to/file1,path/to/file1,local-disk 200 SSD)
+
         jesInputs should contain(GcpBatchFileInput(
           name = "wf_whereami.whereami.file1-0",
           cloudPath = gcsPath("gs://path/to/file1"),
