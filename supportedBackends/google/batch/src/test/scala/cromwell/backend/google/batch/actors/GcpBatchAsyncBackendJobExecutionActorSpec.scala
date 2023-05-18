@@ -9,7 +9,8 @@ import cats.data.NonEmptyList
 import com.google.cloud.NoCredentials
 import com.google.cloud.batch.v1.{Job, JobName}
 import common.collections.EnhancedCollections._
-import cromwell.backend.BackendJobExecutionActor.{BackendJobExecutionResponse, JobFailedNonRetryableResponse, JobFailedRetryableResponse}
+import cromwell.backend.BackendJobExecutionActor.BackendJobExecutionResponse
+//import cromwell.backend.BackendJobExecutionActor.{BackendJobExecutionResponse, JobFailedNonRetryableResponse, JobFailedRetryableResponse}
 import cromwell.backend._
 import cromwell.backend.async.AsyncBackendJobExecutionActor.{Execute, ExecutionMode}
 import cromwell.backend.async.{ExecutionHandle, FailedNonRetryableExecutionHandle, FailedRetryableExecutionHandle}
@@ -35,7 +36,7 @@ import cromwell.util.SampleWdl
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.prop.Tables.Table
+//import org.scalatest.prop.Tables.Table
 import org.slf4j.Logger
 import spray.json._
 import wdl.transforms.draft2.wdlom2wom.WdlDraft2WomExecutableMakers._
@@ -251,7 +252,7 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
     system.actorOf(Props(new ExecuteOrRecoverActor), "ExecuteOrRecoverActor-" + UUID.randomUUID)
   }
 
-  private def runAndFail(previousPreemptions: Int, previousUnexpectedRetries: Int, preemptible: Int, errorCode: Status, innerErrorMessage: String, expectPreemptible: Boolean): BackendJobExecutionResponse = {
+  def runAndFail(previousPreemptions: Int, previousUnexpectedRetries: Int, preemptible: Int, errorCode: Status, innerErrorMessage: String, expectPreemptible: Boolean): BackendJobExecutionResponse = {
 
     val runStatus: RunStatus = RunStatus.Failed(List.empty)
 //    val runStatus = UnsuccessfulRunStatus(errorCode, Option(innerErrorMessage), Seq.empty, Option("fakeMachine"), Option("fakeZone"), Option("fakeInstance"), expectPreemptible)
@@ -298,55 +299,55 @@ class GcpBatchAsyncBackendJobExecutionActorSpec extends TestKitSuite
 
   private val timeout = 25 seconds
 
-  { // Set of "handle call failures appropriately with respect to preemption and failure" tests
-    val expectations = Table(
-      ("previous_preemptions", "previous_unexpectedRetries", "preemptible", "errorCode", "message", "shouldRunAsPreemptible", "shouldRetry"),
-      // No preemptible attempts allowed, but standard failures should be retried.
-//      (0, 0, 0, Status.ABORTED, "13: retryable error", false, true), // This is the new "unexpected failure" mode, which is now retried
-//      (0, 1, 0, Status.ABORTED, "13: retryable error", false, true),
-//      (0, 2, 0, Status.ABORTED, "13: retryable error", false, false), // The third unexpected failure is a real failure.
-//      (0, 0, 0, Status.ABORTED, "14: usually means preempted...?", false, false), // Usually means "preempted', but this wasn't a preemptible VM, so this should just be a failure.
-//      (0, 0, 0, Status.ABORTED, "15: other error", false, false),
-//      (0, 0, 0, Status.OUT_OF_RANGE, "13: unexpected error", false, false),
-//      (0, 0, 0, Status.OUT_OF_RANGE, "14: test error msg", false, false),
-      // These commented out tests should be uncommented if/when we stop mapping 13 to 14 in preemption mode
-      // 1 preemptible attempt allowed, but not all failures represent preemptions.
-      //      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
-      //      (0, 1, 1, Status.ABORTED, "13: retryable error", true, true),
-      //      (0, 2, 1, Status.ABORTED, "13: retryable error", true, false),
-      // The following 13 based test should be removed if/when we stop mapping 13 to 14 in preemption mode
-//      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
-//      (0, 0, 1, Status.ABORTED, "14: preempted", true, true),
-//      (0, 0, 1, Status.UNKNOWN, "Instance failed to start due to preemption.", true, true),
-//      (0, 0, 1, Status.ABORTED, "15: other error", true, false),
-//      (0, 0, 1, Status.OUT_OF_RANGE, "13: retryable error", true, false),
-//      (0, 0, 1, Status.OUT_OF_RANGE, "14: preempted", true, false),
-//      (0, 0, 1, Status.OUT_OF_RANGE, "Instance failed to start due to preemption.", true, false),
-//      // 1 preemptible attempt allowed, but since we're now on the second preemption attempt only 13s should be retryable.
-//      (1, 0, 1, Status.ABORTED, "13: retryable error", false, true),
-//      (1, 1, 1, Status.ABORTED, "13: retryable error", false, true),
-//      (1, 2, 1, Status.ABORTED, "13: retryable error", false, false),
-//      (1, 0, 1, Status.ABORTED, "14: preempted", false, false),
-//      (1, 0, 1, Status.UNKNOWN, "Instance failed to start due to preemption.", false, false),
-//      (1, 0, 1, Status.ABORTED, "15: other error", false, false),
-//      (1, 0, 1, Status.OUT_OF_RANGE, "13: retryable error", false, false),
-//      (1, 0, 1, Status.OUT_OF_RANGE, "14: preempted", false, false),
-//      (1, 0, 1, Status.OUT_OF_RANGE, "Instance failed to start due to preemption.", false, false)
-    )
-
-    expectations foreach { case (previousPreemptions, previousUnexpectedRetries, preemptible, errorCode, innerErrorMessage, shouldBePreemptible, shouldRetry) =>
-      val descriptor = s"previousPreemptions=$previousPreemptions, previousUnexpectedRetries=$previousUnexpectedRetries preemptible=$preemptible, errorCode=$errorCode, innerErrorMessage=$innerErrorMessage"
-      it should s"handle call failures appropriately with respect to preemption and failure ($descriptor)" in {
-        runAndFail(previousPreemptions, previousUnexpectedRetries, preemptible, errorCode, innerErrorMessage, shouldBePreemptible) match {
-          case response: JobFailedNonRetryableResponse =>
-            if(shouldRetry) fail(s"A should-be-retried job ($descriptor) was sent back to the engine with: $response")
-          case response: JobFailedRetryableResponse =>
-            if(!shouldRetry) fail(s"A shouldn't-be-retried job ($descriptor) was sent back to the engine with $response")
-          case huh => fail(s"Unexpected response: $huh")
-        }
-      }
-    }
-  }
+//  { // Set of "handle call failures appropriately with respect to preemption and failure" tests
+//    val expectations = Table(
+//      ("previous_preemptions", "previous_unexpectedRetries", "preemptible", "errorCode", "message", "shouldRunAsPreemptible", "shouldRetry"),
+//      // No preemptible attempts allowed, but standard failures should be retried.
+////      (0, 0, 0, Status.ABORTED, "13: retryable error", false, true), // This is the new "unexpected failure" mode, which is now retried
+////      (0, 1, 0, Status.ABORTED, "13: retryable error", false, true),
+////      (0, 2, 0, Status.ABORTED, "13: retryable error", false, false), // The third unexpected failure is a real failure.
+////      (0, 0, 0, Status.ABORTED, "14: usually means preempted...?", false, false), // Usually means "preempted', but this wasn't a preemptible VM, so this should just be a failure.
+////      (0, 0, 0, Status.ABORTED, "15: other error", false, false),
+////      (0, 0, 0, Status.OUT_OF_RANGE, "13: unexpected error", false, false),
+////      (0, 0, 0, Status.OUT_OF_RANGE, "14: test error msg", false, false),
+//      // These commented out tests should be uncommented if/when we stop mapping 13 to 14 in preemption mode
+//      // 1 preemptible attempt allowed, but not all failures represent preemptions.
+//      //      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
+//      //      (0, 1, 1, Status.ABORTED, "13: retryable error", true, true),
+//      //      (0, 2, 1, Status.ABORTED, "13: retryable error", true, false),
+//      // The following 13 based test should be removed if/when we stop mapping 13 to 14 in preemption mode
+////      (0, 0, 1, Status.ABORTED, "13: retryable error", true, true),
+////      (0, 0, 1, Status.ABORTED, "14: preempted", true, true),
+////      (0, 0, 1, Status.UNKNOWN, "Instance failed to start due to preemption.", true, true),
+////      (0, 0, 1, Status.ABORTED, "15: other error", true, false),
+////      (0, 0, 1, Status.OUT_OF_RANGE, "13: retryable error", true, false),
+////      (0, 0, 1, Status.OUT_OF_RANGE, "14: preempted", true, false),
+////      (0, 0, 1, Status.OUT_OF_RANGE, "Instance failed to start due to preemption.", true, false),
+////      // 1 preemptible attempt allowed, but since we're now on the second preemption attempt only 13s should be retryable.
+////      (1, 0, 1, Status.ABORTED, "13: retryable error", false, true),
+////      (1, 1, 1, Status.ABORTED, "13: retryable error", false, true),
+////      (1, 2, 1, Status.ABORTED, "13: retryable error", false, false),
+////      (1, 0, 1, Status.ABORTED, "14: preempted", false, false),
+////      (1, 0, 1, Status.UNKNOWN, "Instance failed to start due to preemption.", false, false),
+////      (1, 0, 1, Status.ABORTED, "15: other error", false, false),
+////      (1, 0, 1, Status.OUT_OF_RANGE, "13: retryable error", false, false),
+////      (1, 0, 1, Status.OUT_OF_RANGE, "14: preempted", false, false),
+////      (1, 0, 1, Status.OUT_OF_RANGE, "Instance failed to start due to preemption.", false, false)
+//    )
+//
+//    expectations foreach { case (previousPreemptions, previousUnexpectedRetries, preemptible, errorCode, innerErrorMessage, shouldBePreemptible, shouldRetry) =>
+//      val descriptor = s"previousPreemptions=$previousPreemptions, previousUnexpectedRetries=$previousUnexpectedRetries preemptible=$preemptible, errorCode=$errorCode, innerErrorMessage=$innerErrorMessage"
+//      it should s"handle call failures appropriately with respect to preemption and failure ($descriptor)" in {
+//        runAndFail(previousPreemptions, previousUnexpectedRetries, preemptible, errorCode, innerErrorMessage, shouldBePreemptible) match {
+//          case response: JobFailedNonRetryableResponse =>
+//            if(shouldRetry) fail(s"A should-be-retried job ($descriptor) was sent back to the engine with: $response")
+//          case response: JobFailedRetryableResponse =>
+//            if(!shouldRetry) fail(s"A shouldn't-be-retried job ($descriptor) was sent back to the engine with $response")
+//          case huh => fail(s"Unexpected response: $huh")
+//        }
+//      }
+//    }
+//  }
 
   it should "send proper value for \"number of reference files used gauge\" metric, or don't send anything if reference disks feature is disabled" in {
 
