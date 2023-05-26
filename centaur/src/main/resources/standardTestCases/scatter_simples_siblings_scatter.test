@@ -1,5 +1,6 @@
 name: siblings_scatter
 testFormat: workflowsuccess
+tags: [batchbug]
 
 files {
   workflow: scatter_simples/siblings_scatter.wdl

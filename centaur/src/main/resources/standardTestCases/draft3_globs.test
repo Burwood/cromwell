@@ -2,7 +2,7 @@ name: draft3_globs
 testFormat: workflowsuccess
 workflowType: WDL
 workflowTypeVersion: 1.0
-tags: ["wdl_1.0"]
+tags: ["wdl_1.0", batchbug]
 
 files {
   workflow: wdl_draft3/globs/globs.wdl

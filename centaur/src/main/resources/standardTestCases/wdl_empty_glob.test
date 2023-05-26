@@ -1,5 +1,6 @@
 name: wdl_empty_glob
 testFormat: workflowsuccess
+tags: [batchbug]
 
 files {
   workflow: wdl_empty_glob/wdl_empty_glob.wdl

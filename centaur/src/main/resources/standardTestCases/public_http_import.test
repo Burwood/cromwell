@@ -1,6 +1,6 @@
 name: public_http_import
 testFormat: workflowsuccess
-tags: [import, subworkflow, alias]
+tags: [import, subworkflow, alias, batchbug]
 
 files {
   workflow: public_http_import/public_http_import.wdl

@@ -1,6 +1,6 @@
 name: lots_of_nesting
 testFormat: workflowsuccess
-tags: [ conditionals ]
+tags: [ conditionals, batchbug ]
 
 files {
   workflow: conditionals_tests/lots_of_nesting/lots_of_nesting.wdl

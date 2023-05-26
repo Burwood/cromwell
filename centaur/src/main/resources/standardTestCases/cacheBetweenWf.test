@@ -1,5 +1,6 @@
 name: cacheBetweenWF
 testFormat: runtwiceexpectingcallcaching
+tags: [batchbug]
 
 files {
   workflow: cacheBetweenWF/cacheBetweenWF.wdl

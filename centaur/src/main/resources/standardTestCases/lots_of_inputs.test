@@ -3,7 +3,7 @@
 # - 400 input files to a task doesn't make anything explode inappropriately
 name: lots_of_inputs
 testFormat: workflowsuccess
-tags: [ big_metadata ]
+tags: [ big_metadata, batchbug ]
 
 files {
   workflow: lots_of_inputs/lots_of_inputs.wdl
