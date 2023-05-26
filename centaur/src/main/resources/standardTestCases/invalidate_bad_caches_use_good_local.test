@@ -1,7 +1,7 @@
 name: invalidate_bad_caches_use_good_local
 testFormat: workflowsuccess
 backends: [Local]
-tags: [localdockertest]
+tags: [localdockertest, batchbug]
 
 files {
   workflow: invalidate_bad_caches/invalidate_bad_caches_use_good.wdl
