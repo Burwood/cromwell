@@ -1,6 +1,6 @@
 name: sub_workflow_no_output
 testFormat: workflowsuccess
-tags: [subworkflow, batchbug]
+tags: [subworkflow]
 
 files {
   workflow: sub_workflow_no_outputs/sub_workflow_no_output.wdl
