@@ -1,6 +1,6 @@
 name: floating_tags
 testFormat: runtwiceexpectingcallcaching
-tags: [batchbug]
+tags: [batchexclude]
 
 files {
   workflow: floating_tags/floating_tags.wdl

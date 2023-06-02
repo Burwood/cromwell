@@ -1,6 +1,6 @@
 name: cacheWithinWF
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchexclude]
 
 files {
   workflow: cacheWithinWF/cacheWithinWF.wdl
