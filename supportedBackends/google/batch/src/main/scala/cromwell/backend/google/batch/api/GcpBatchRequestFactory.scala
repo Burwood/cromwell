@@ -88,8 +88,8 @@ object GcpBatchRequestFactory {
                                       checkpointingConfiguration: CheckpointingConfiguration,
                                       enableSshAccess: Boolean,
                                       vpcNetworkAndSubnetworkProjectLabels: Option[VpcAndSubnetworkProjectLabelValues],
-                                      dockerhubCredentials: (String, String)
-                                      //dockerImageCacheDiskOpt: Option[String]
+                                      dockerhubCredentials: (String, String),
+                                      dockerImageCacheDiskOpt: Option[String]
                                      ) {
     def literalInputs = inputOutputParameters.literalInputParameters
 
