@@ -661,6 +661,12 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
 
   override def isTransient(throwable: Throwable): Boolean = isTransientJesException(throwable)
 
+  /**
+    * Given a path (relative or absolute), returns a (Path, JesAttachedDisk) tuple where the Path is
+    * relative to the AttachedDisk's mount point
+    *
+    * @throws Exception if the `path` does not live in one of the supplied `disks`
+    */
   protected def relativePathAndAttachedDisk(path: String, disks: Seq[GcpBatchAttachedDisk]): (Path, GcpBatchAttachedDisk) = {
     val absolutePath = DefaultPathBuilder.get(path) match {
       case p if !p.isAbsolute => GcpBatchWorkingDisk.MountPoint.resolve(p)
@@ -1026,7 +1032,7 @@ class GcpBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
         true
       case _: RunStatus.UnsuccessfulRunStatus =>
         log.info("GCP batch job unsuccessful matched isDone")
-        true
+        false // this is false on papi-common, not sure whether this is correct
       case _ =>
         log.info(s"did not match isDone: $runStatus")
         throw new RuntimeException(s"Cromwell programmer blunder: isDone was called on an incomplete RunStatus ($runStatus).")
