@@ -17,7 +17,7 @@ trait BatchApiFetchJobClient { this: Actor with ActorLogging with BatchInstrumen
   // handles messages produced from GcpBatchBackendSingletonActor
   def pollingActorClientReceive: Actor.Receive = {
     case GcpBatchBackendSingletonActor.Event.JobStatusRetrieved(job) =>
-      log.info(s"Job retrieved from GCP: ${job.getName}: ${job.getStatus}")
+      log.info(s"Job retrieved from GCP: ${job.getName}: ${job.getStatus.getState}")
       pollSuccess()
       completePromise(Success(job))
 
