@@ -21,7 +21,7 @@ trait BatchApiRunCreationClient { this: Actor with ActorLogging with BatchInstru
       runSuccess()
       completePromise(Success(StandardAsyncJob(job.getName)))
 
-    case GcpBatchBackendSingletonActor.Event.ActionFailed(jobName, cause) =>
+    case GcpBatchBackendSingletonActor.Event.SubmitJobFailed(jobName, cause) =>
       val msg = s"Failed to submit job ($jobName) to GCP"
       log.error(cause, msg)
       runFailed()

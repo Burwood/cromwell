@@ -1,6 +1,7 @@
 package cromwell.backend.google.batch.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
+import com.google.api.gax.rpc.NotFoundException
 import com.google.cloud.batch.v1.JobName
 import com.google.longrunning.Operation
 import cromwell.backend.BackendSingletonActorAbortWorkflow
@@ -30,10 +31,14 @@ object GcpBatchBackendSingletonActor {
   // This is the only type of messages produced from this actor while reacting to received messages
   sealed trait Event extends Product with Serializable
   object Event {
+    final case class SubmitJobFailed(jobName: String, cause: Throwable) extends Action
     final case class JobSubmitted(job: com.google.cloud.batch.v1.Job) extends Event
+
+    final case class QueryJobFailed(jobName: String, cause: Throwable) extends Action
     final case class JobStatusRetrieved(job: com.google.cloud.batch.v1.Job) extends Event
-    final case class JobAbortRequestSent(operation: Operation) extends Event
-    final case class ActionFailed(jobName: String, cause: Throwable) extends Event
+
+    final case class AbortJobFailed(jobName: String, cause: Throwable) extends Action
+    final case class JobAbortRequestSent(jobName: JobName, operation: Option[Operation]) extends Event
   }
 
 }
@@ -63,7 +68,7 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
       }.onComplete {
         case Failure(exception) =>
           log.error(exception, s"Failed to submit job (${request.jobName}) to GCP, workflowId = ${request.workflowId}")
-          replyTo ! Event.ActionFailed(request.jobName, exception)
+          replyTo ! Event.SubmitJobFailed(request.jobName, exception)
 
         case Success(job) =>
           log.info(s"Job (${request.jobName}) submitted to GCP, workflowId = ${request.workflowId}, id = ${job.getUid}")
@@ -82,7 +87,7 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
 
         case Failure(exception) =>
           log.error(exception,  s"Failed to query job status ($jobName) from GCP")
-          replyTo ! Event.ActionFailed(jobName.toString ,exception)
+          replyTo ! Event.QueryJobFailed(jobName.toString ,exception)
       }
 
     case Action.AbortJob(jobName) =>
@@ -93,11 +98,15 @@ final class GcpBatchBackendSingletonActor(requestFactory: GcpBatchRequestFactory
       }.onComplete {
         case Success(operation) =>
           log.info(s"Job ($jobName) aborted from GCP")
-          replyTo ! Event.JobAbortRequestSent(operation)
+          replyTo ! Event.JobAbortRequestSent(jobName, Some(operation))
+
+        case Failure(_: NotFoundException) =>
+          log.info(s"Job ($jobName) not found on GCP, no need to abort anything")
+          replyTo ! Event.JobAbortRequestSent(jobName, None)
 
         case Failure(exception) =>
           log.error(exception, s"Failed to abort job ($jobName) from GCP")
-          replyTo ! Event.ActionFailed(jobName.toString, exception)
+          replyTo ! Event.AbortJobFailed(jobName.toString, exception)
       }
 
     // Cromwell sends this message

@@ -11,11 +11,11 @@ trait BatchApiAbortClient { this: Actor with ActorLogging with BatchInstrumentat
   }
 
   def abortActorClientReceive: Actor.Receive = {
-    case GcpBatchBackendSingletonActor.Event.JobAbortRequestSent(job) =>
-      log.info(s"Job aborted on GCP: ${job.getName}")
+    case GcpBatchBackendSingletonActor.Event.JobAbortRequestSent(jobName, _) =>
+      log.info(s"Job aborted on GCP: $jobName")
       abortSuccess()
 
-    case GcpBatchBackendSingletonActor.Event.ActionFailed(jobName, cause) =>
+    case GcpBatchBackendSingletonActor.Event.AbortJobFailed(jobName, cause) =>
       val msg = s"Failed to abort job ($jobName) from GCP"
       log.error(cause, msg)
       abortFailed()

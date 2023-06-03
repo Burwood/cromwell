@@ -21,7 +21,7 @@ trait BatchApiFetchJobClient { this: Actor with ActorLogging with BatchInstrumen
       pollSuccess()
       completePromise(Success(job))
 
-    case GcpBatchBackendSingletonActor.Event.ActionFailed(jobName, cause) =>
+    case GcpBatchBackendSingletonActor.Event.QueryJobFailed(jobName, cause) =>
       val msg = s"Failed to query job ($jobName) from GCP"
       log.error(cause, msg)
       pollFailed()
