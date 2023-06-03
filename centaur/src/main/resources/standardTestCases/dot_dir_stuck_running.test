@@ -1,6 +1,6 @@
 name: dot_dir_stuck_running
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: dot_dir_stuck_running/dot_dir_stuck_running.wdl

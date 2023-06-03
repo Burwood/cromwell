@@ -1,6 +1,6 @@
 name: dontglobinputs
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: dontglobinputs/dontglobinputs.wdl

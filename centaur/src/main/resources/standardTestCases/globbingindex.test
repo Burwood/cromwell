@@ -1,6 +1,6 @@
 name: globbingindex
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: globbingindex/globbingindex.wdl

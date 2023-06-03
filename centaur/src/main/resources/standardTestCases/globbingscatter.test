@@ -1,6 +1,6 @@
 name: globbingscatter
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: globbingscatter/globbingscatter.wdl

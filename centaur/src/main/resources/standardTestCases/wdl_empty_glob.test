@@ -1,6 +1,6 @@
 name: wdl_empty_glob
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: wdl_empty_glob/wdl_empty_glob.wdl

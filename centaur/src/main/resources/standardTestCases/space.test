@@ -1,6 +1,6 @@
 name: space
 testFormat: workflowsuccess
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: space/space.wdl

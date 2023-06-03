@@ -1,7 +1,7 @@
 # Verifies that if we supply a non-existent filename to a File output variable that it fails
 name: bad_output_task
 testFormat: workflowfailure
-tags: [batchbug]
+tags: [batchbugfixed]
 
 files {
   workflow: bad_output_task/bad_output_task.wdl
