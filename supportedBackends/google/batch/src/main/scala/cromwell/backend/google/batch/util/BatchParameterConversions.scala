@@ -2,6 +2,7 @@ package cromwell.backend.google.batch.util
 
 import com.google.cloud.batch.v1.{Runnable, Volume}
 import com.typesafe.config.ConfigFactory
+import cromwell.backend.google.batch.io.GcpBatchWorkingDisk
 import cromwell.backend.google.batch.models.GcpBatchConfigurationAttributes.GcsTransferConfiguration
 import cromwell.backend.google.batch.models._
 import cromwell.backend.google.batch.runnable._
@@ -45,9 +46,8 @@ trait GcpBatchParameterConversions {
             case Some(ngc) => (s"echo $ngc | base64 -d > /tmp/sra.ngc", "-n /tmp/sra.ngc")
             case None => ("", "")
           }
-          // TODO: Verify whether this is the correct mount path, /cromwell_root caused issues and we moved the path
-          //       to /media/mnt/cromwell_root in another place.
-          val mountpoint = s"/cromwell_root/sra-${sraPath.accession}"
+
+          val mountpoint = s"${GcpBatchWorkingDisk.MountPoint.pathAsString}/sra-${sraPath.accession}"
           val runFusera = s"fusera mount $ngcArgs -a ${sraPath.accession} $mountpoint"
           val localizationRunnables = RunnableBuilder
             .withImage(image)
