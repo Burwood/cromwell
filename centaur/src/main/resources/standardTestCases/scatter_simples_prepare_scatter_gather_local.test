@@ -1,7 +1,7 @@
 name: prepare_scatter_gather_local
 testFormat: workflowsuccess
 backends: [Local]
-tags: [localdockertest, "batchbug"]
+tags: [localdockertest]
 
 files {
   workflow: scatter_simples/prepare_scatter_gather.wdl

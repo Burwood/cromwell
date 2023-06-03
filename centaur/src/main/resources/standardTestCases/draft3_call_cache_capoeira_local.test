@@ -11,7 +11,7 @@ testFormat: workflowsuccess
 backends: [Local]
 workflowType: WDL
 workflowTypeVersion: 1.0
-tags: ["wdl_1.0", localdockertest, batchbug]
+tags: ["wdl_1.0", localdockertest]
 retryTestFailures: false
 
 files {

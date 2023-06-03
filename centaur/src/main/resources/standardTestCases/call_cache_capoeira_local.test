@@ -9,7 +9,7 @@
 name: call_cache_capoeira_local
 testFormat: workflowsuccess
 backends: [Local]
-tags: [localdockertest, "batchbug"]
+tags: [localdockertest]
 retryTestFailures: false
 
 files {
